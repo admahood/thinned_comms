@@ -1,5 +1,5 @@
 library(tidyverse)
-
+library(janitor)
 esv <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                               sheet = "Export_TBL_MS_Spokes")
 pha <- readxl::read_xlsx("data/PHA_Export_20231024.xlsx",
@@ -43,3 +43,5 @@ comm <- cover_plot %>%
   filter(rowSums(.)>0)
 
 rowSums(comm)
+dim(comm)
+comm <- comm[,colSums(comm)>0];dim(comm) # 20 species have 0 occurrences

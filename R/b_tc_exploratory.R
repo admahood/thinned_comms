@@ -165,10 +165,9 @@ bind_rows(tidy(richmod) %>% mutate(variable = "richness"),
 pdiv <- div %>%
   pivot_longer(cols = c("shannon", "simpson", "richness")) %>%
   arrange(name,Phase) %>%
-  ggplot(aes(x=Phase, y = value)) +
-  # geom_violin(draw_quantiles = c(.5)) +
-  geom_boxplot() +
-  facet_wrap(PlotTreatmentStatus~name, scales = "free_y") 
+  ggplot(aes(x=Phase, y = value, fill = PlotTreatmentStatus)) +
+  geom_boxplot(position = "dodge") +
+  facet_wrap(~name, scales = "free_y") 
 
 ggsave(plot = pdiv, filename = "out/diversity_indexes.png", bg = "white",
        height = 7, width =10)
@@ -179,8 +178,12 @@ vegan::nestedbetasor(comm[which(div$Phase == "Post")])
 vegan::nestedbetasor(comm[which(div$Phase == "Post3")])
 
 # need to make a look up table to separate control vs treatment
+nestedchecker(comm)
+nestedtemp(comm) %>% plot(kind = "incid")
+vegan::nestedtemp(comm[which(div$Phase == "Pre")]) %>% plot(kind = "incid")
+vegan::nestedtemp(comm[which(div$Phase == "Post")]) %>% plot(kind = "incid")
+vegan::nestedtemp(comm[which(div$Phase == "Post3")]) %>% plot(kind = "incid")
+oecosimu(comm, nestedchecker, "quasiswap")
+oecosimu(comm[which(div$Phase == "Post3")], nestedchecker, "quasiswap")
 
-nestedtemp(comm) %>% plot()
-vegan::nestedtemp(comm[which(div$Phase == "Pre")]) %>% plot(add=T)
-vegan::nestedtemp(comm[which(div$Phase == "Post")]) %>% plot(add=T)
-vegan::nestedtemp(comm[which(div$Phase == "Post3")]) %>% plot(add=T)
+
