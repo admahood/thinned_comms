@@ -45,3 +45,22 @@ comm <- cover_plot %>%
 rowSums(comm)
 dim(comm)
 comm <- comm[,colSums(comm)>0];dim(comm) # 20 species have 0 occurrences
+
+
+cover_by_type <-
+  cover_plot |>
+  group_by(VisitCode, CodeType) |>
+  summarise(cover = sum(cover, na.rm=T)) |>
+  ungroup()
+
+unique(cover_by_type$CodeType)
+
+herbaceous_cover <-
+  cover_by_type |>
+  mutate(code_modified = ifelse(CodeType %in% c("Forb", "Graminoid"), "Herbaceous", CodeType))  |>
+  group_by(VisitCode, code_modified) |>
+  summarise(cover = sum(cover, na.rm=T)) |>
+  ungroup()
+
+write_csv(herbaceous_cover, "data/herb_cover_by_plot.csv")
+write_csv(cover_by_type, "data/cover_by_plot.csv")
