@@ -5,6 +5,8 @@ library(vegan)
 library(ggrepel)
 library(broom)
 
+# gllvm?
+
 #functions==============================
 
 nms_prep <- function(comm, meta, pa = FALSE) {
@@ -15,7 +17,7 @@ nms_prep <- function(comm, meta, pa = FALSE) {
   out$stressplot <- stressplot(nms)
   
   out$site_scores <- as.data.frame(vegan::scores(nms)$sites) %>%
-    as_tibble(rownames = "VisitCode")%>%
+    as_tibble(rownames = "new_visit_code")%>%
     left_join(meta) %>%
     dplyr::arrange(Phase) %>%
     dplyr::filter(Phase != "Post2")
@@ -34,17 +36,16 @@ nms_prep <- function(comm, meta, pa = FALSE) {
 # wrangling
 by_grp <- cover_plot %>%
   filter(!CodeType %in% non_plant_codes) %>%
-  group_by(CodeType,VisitCode) %>%
+  group_by(CodeType,new_visit_code) %>%
   summarise(cover=sum(cover, na.rm=T)) %>%
   ungroup() %>%
-  tidyr::separate(VisitCode, c("Plot", "phase"), "\\.", remove = FALSE) %>%
+  tidyr::separate(new_visit_code, c("Plot", "phase"), "\\.", remove = FALSE) %>%
   tidyr::separate(Plot, into= c("site", "plot", "trt", "id"), sep = "\\-", remove = FALSE) %>%
   mutate(phase = ifelse(phase == "PreNT", "Pre", phase),
          phase = ifelse(phase == "Post2" & site != "PHA", "Post3", phase),
          phase = ifelse(phase == "Pre", "0Pre", phase),
          site = ifelse(site %in% c("P1", "P2"), "PHA", site),
-         trt = ifelse(str_detect(VisitCode, "C"), "Control", "Treatment")) 
-
+         trt = ifelse(str_detect(new_visit_code, "C"), "Control", "Treatment")) 
 
 # functional group =============
 by_grp %>%
@@ -123,12 +124,8 @@ ggpubr::ggarrange(p_a, p_o, nrow=1, ncol =2, widths = c(1,1.4)) %>%
 
 # diversity ======================================
 
-div <- data.frame(VisitCode = rownames(comm)) %>%
-  left_join(meta %>% unique()) %>%
-  dplyr::mutate(Phase = factor(Phase, 
-                               levels = c("Pre", "Post", "Post2", "Post3"),
-                               labels = c("Pre", "Post", "Post2", "Post3"),
-                               ordered = TRUE)) %>%
+div <- data.frame(new_visit_code = rownames(comm)) %>%
+  left_join(meta %>% unique())%>%
   mutate(shannon = comm %>% vegan::diversity("shannon"),
          simpson = comm %>% vegan::diversity("shannon"),
          richness = comm %>% vegan::specnumber(),
@@ -167,7 +164,7 @@ pdiv <- div %>%
   arrange(name,Phase) %>%
   ggplot(aes(x=Phase, y = value, fill = PlotTreatmentStatus)) +
   geom_boxplot(position = "dodge") +
-  facet_wrap(~name, scales = "free_y") 
+  facet_wrap(site~name, scales = "free_y") 
 
 ggsave(plot = pdiv, filename = "out/diversity_indexes.png", bg = "white",
        height = 7, width =10)
