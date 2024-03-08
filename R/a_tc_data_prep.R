@@ -7,6 +7,10 @@ site_visits <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                             sheet = "Export_TBL_Site_Visit") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_Site_Visit"))
+plot_visits <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx", 
+                                 sheet = "Export_TBL_PlotVisit") |>
+  bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
+                              sheet = "Export_TBL_PlotVisit")) 
 
 treatments <- plot_visits |>
   dplyr::select(TreatmentDate1, TreatmentUnit) |>
@@ -19,10 +23,7 @@ lut_trtd <- pull(treatments, TreatmentDate1)
 names(lut_trtd) <- pull(treatments, TreatmentUnit)
 
 
-plot_visits <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx", 
-                         sheet = "Export_TBL_PlotVisit") |>
-  bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
-                              sheet = "Export_TBL_PlotVisit")) |>
+plot_visits <- plot_visits |>
   mutate(trt_year = lut_trtd[TreatmentUnit],
          visit_year = lubridate::year(VisitDate),
          yst = visit_year - trt_year,
@@ -36,9 +37,10 @@ plot_visits <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
 
 plot_visits |>
   group_by(trt_year) |>
-  summarise(n_plots = length(unique(PlotCode)))
+  summarise(n_plots = length(unique(PlotCode))) |>
+  print(n=21)
 
-plot_visits <- plot_visits|>
+plot_visits_10y <- plot_visits|>
   filter(trt_year != 2017);glimpse(plot_visits)
 
 filter(plot_visits, is.na(yst)) |> glimpse() # 4 plots not sampled
@@ -48,10 +50,12 @@ pull(plot_visits, yst) |> unique()
 lut_phase <- pull(plot_visits, VisitCode)
 names(lut_phase) <- pull(plot_visits, phase_adj)
 
-new_vcs<- dplyr::select(plot_visits, VisitCode, new_visit_code) |> unique()
+new_vcs<- dplyr::select(plot_visits, VisitCode, new_visit_code, phase_adj, trt_year) |> unique()
 table(plot_visits$phase_adj)
 
-plot_visits
+plot_visits |>
+  group_by(phase_adj, trt_year) |>
+  summarise(n_plots = length(unique(PlotCode)))
 
 
 # khr fuels ====================================================================
@@ -60,6 +64,92 @@ khr_fuels <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_1KhrFuel")) |>
   left_join(new_vcs); glimpse(khr_fuels)
+
+khr_fuels |>
+  group_by(phase_adj, trt_year, PlotSize) |>
+  summarise(n_plots = length(unique(PlotCode)))
+
+# centerPlotTreeData ============
+
+cp_tree <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx", 
+                               sheet = "Export_TBL_CenterPlotTreeData") |>
+  bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
+                              sheet = "Export_TBL_CenterPlotTreeData")) |>
+  left_join(new_vcs); glimpse(cp_tree)
+
+cp_tree |>
+  group_by(phase_adj, trt_year) |>
+  summarise(n_plots = length(unique(PlotCode)))
+dim(cp_tree)
+
+ggpubr::ggarrange(
+cp_tree |>
+  filter(Species %in% c("PIPO", "PSME")) |>
+  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Control", PlotTreatmentStatus)) |>
+  ggplot(aes(x=phase_adj, y=DBH, fill=PlotTreatmentStatus)) +
+  geom_boxplot() +
+  facet_wrap(trt_year~Species) +
+  ggtitle("CenterPlotTreeData, DBH", "no TagIDs, so we cant track individual trees")
+,
+cp_tree |>
+  filter(Species %in% c("PIPO", "PSME")) |>
+  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Control", PlotTreatmentStatus)) |>
+  ggplot() +
+  geom_boxplot(aes(x=phase_adj, y=Height, fill=PlotTreatmentStatus)) +
+  facet_wrap(trt_year~Species) +
+  ggtitle("CenterPlotTreeData, Height", "no TagIDs, so we cant track individual trees")
+, common.legend = TRUE, nrow=1)
+ggsave("out/centerPlotTreeData.png", width=15, height=8)
+
+# center plot sapling ==========================================================
+cp_sapling <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx", 
+                             sheet = "Export_TBL_CenterPlotSapling") |>
+  bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
+                              sheet = "Export_TBL_CenterPlotSapling")) |>
+  left_join(new_vcs); glimpse(cp_sapling)
+
+cp_sapling |>
+  group_by(phase_adj, trt_year) |>
+  summarise(n_plots = length(unique(PlotCode)))
+dim(cp_sapling)
+
+
+cp_sapling |>
+  group_by(new_visit_code, trt_year, phase_adj, PlotTreatmentStatus) |>
+  summarise(stems = sum(StemCount),
+            mean_height = mean(Height, na.rm=T),
+            mean_dbh = mean(DBH, na.rm=T)) |>
+  ungroup() |>
+  pivot_longer(cols = c(stems, mean_dbh, mean_height)) |>
+  ggplot(aes(x=phase_adj, y=value, fill = PlotTreatmentStatus)) +
+  geom_boxplot() +
+  facet_wrap(trt_year~name, scales = "free_y") +
+  ggtitle("Saplings")
+ggsave("out/centerPlotSaplings.png", width=10, height=6)
+
+# seedlings ====================================================================
+sp_seedling <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx", 
+                                sheet = "Export_TBL_SubPlotSeedling") |>
+  bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
+                              sheet = "Export_TBL_SubPlotSeedling")) |>
+  left_join(new_vcs); glimpse(sp_seedling)
+
+sp_seedling |>
+  group_by(new_visit_code, trt_year, phase_adj, PlotTreatmentStatus) |>
+  summarise(TotalCount = sum(TotalCount)) |>
+  ungroup() |>
+  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated",
+                                      "Control", PlotTreatmentStatus)) |>
+  
+  ggplot(aes(x=TotalCount +1, fill=PlotTreatmentStatus)) +
+  geom_density(alpha=0.5) +
+  facet_grid(trt_year~phase_adj) +
+  scale_x_log10() +
+  ggtitle("Plot seedling counts (all species summed)")
+ggsave("out/SubPlotSeedlings.png", width=10, height=6)
+
+# ground fuel ==================================================================
+
 
 
 # plant understory =============================================================
