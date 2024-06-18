@@ -1,0 +1,316 @@
+SpeciesCode,CodeType,prevalence,FinalName,Family,GrowthForm,Lifespan,NativityL48
+ARUV,Shrub,837,Arctostaphylos uva-ursi,Ericaceae,shrub,long-lived,native
+JUCO6,Shrub,735,Juniperus communis,Cupressaceae,shrub,long-lived,native
+CAPU,Graminoid,599,Calamagrostis purpurascens,Poaceae,graminoid,long-lived,native
+CAREX,Graminoid,578,Carex,Cyperaceae,graminoid,long-lived,native
+PSME,Tree,534,Pseudotsuga menziesii,Pinaceae,tree,long-lived,native
+PIPO,Tree,425,Pinus ponderosa,Pinaceae,tree,long-lived,native
+KOMA,Graminoid,417,Koeleria macrantha,Poaceae,graminoid,long-lived,native
+POTR5,Tree,385,Populus tremuloides,Salicaceae,tree,long-lived,native
+CARO5,Graminoid,322,NA,NA,NA,NA,NA
+POFI3,Forb,317,Potentilla fissa,Asteraceae,forb,long-lived,native
+GECA3,Forb,296,Geranium caespitosum,Geraniaceae,forb,long-lived,native
+ACMI2,Forb,292,Achillea millefolium,Asteraceae,forb,long-lived,native
+ANPA4,Forb,257,Antennaria parvifolia,Asteraceae,forb,long-lived,native
+PUPA5,Forb,253,Pulsatilla patens,Ranunculaceae,forb,long-lived,native
+MUMO,Graminoid,246,Muhlenbergia montana,Poaceae,graminoid,long-lived,native
+SOLID,Forb,240,Solidago,Asteraceae,forb,long-lived,native
+CARO2,Forb,235,Campanula rotundifolia,Campanulaceae,forb,long-lived,native
+ALCE2,Forb,221,Allium cernuum,Liliaceae,forb,long-lived,native
+FRVI,Forb,218,Fragaria virginiana,Rosaceae,forb,long-lived,native
+SELA,Forb,216,Sedum lanceolatum,Crassulaceae,forb,long-lived,native
+ARFE3,Forb,199,Arenaria fendleri,Caryophyllaceae,forb,long-lived,native
+MELA3,Forb,182,Mertensia lanceolata,Boraginaceae,forb,long-lived,native
+ROWO,Shrub,181,Rosa woodsii,Rosaceae,shrub,long-lived,native
+ANSE4,Forb,177,Androsace septentrionalis,Primulaceae,forb,long-lived,native
+PEVI3,Forb,171,Penstemon virens,Scrophulariaceae,forb,long-lived,native
+FRSP,Forb,170,Frasera speciosa,Gentianaceae,forb,long-lived,native
+PAFE4,Forb,158,Packera fendleri,Asteraceae,forb,long-lived,native
+PIPU,Tree,149,NA,NA,NA,NA,NA
+POHI6,Forb,143,Potentilla hippiana,Asteraceae,forb,long-lived,native
+MAST4,Forb,138,Maianthemum stellatum,Liliaceae,forb,long-lived,native
+ARFE,Forb,136,Arabis fendleri,Brassicaceae,forb,long-lived,native
+PACA15,Forb,131,NA,NA,NA,NA,NA
+RICE,Shrub,129,Ribes cereum,Grossulariaceae,shrub,long-lived,native
+HEVI4,Forb,128,Heterotheca villosa,Asteraceae,forb,long-lived,native
+FEAR2,Graminoid,127,NA,NA,NA,NA,NA
+NOFE3,Forb,121,Noccaea fendleri,Brassicaceae,forb,long-lived,native
+POFE,Graminoid,116,Poa fendleriana,Poaceae,graminoid,long-lived,native
+ARLU,Forb,114,Artemisia ludoviciana,Asteraceae,forb,long-lived,native
+SOSI3,Forb,107,NA,NA,NA,NA,NA
+PEGL3,Forb,106,Penstemon glaber,Scrophulariaceae,forb,long-lived,native
+ANTEN,Forb,94,Antennaria,Asteraceae,forb,long-lived,native
+SISC7,Forb,90,Silene scouleri,Caryophyllaceae,forb,long-lived,native
+PSMO,Forb,89,Pseudocymopterus montanus,Apiaceae,forb,long-lived,native
+ARFR4,Forb,88,Artemisia frigida,Asteraceae,forb,long-lived,native
+PIEN,Tree,87,NA,NA,NA,NA,NA
+TAOF,Forb,84,Taraxacum officinale,Asteraceae,forb,long-lived,exotic
+DRST4,Forb,80,Draba streptocarpa,Brassicaceae,forb,long-lived,native
+ERCO4,Forb,79,Erigeron compositus,Asteraceae,forb,long-lived,native
+ROSA5,Shrub,74,Rosa,Rosaceae,shrub,long-lived,native
+FESA,Graminoid,73,Festuca saximontana,Poaceae,graminoid,long-lived,native
+PUTR2,Shrub,73,Purshia tridentata,Rosaceae,shrub,long-lived,native
+CLCO2,Forb,72,NA,NA,NA,NA,NA
+HATR,Forb,66,Harbouria trachypleura,Apiaceae,forb,long-lived,native
+BRCI2,Graminoid,65,Bromus ciliatus,Poaceae,graminoid,long-lived,native
+JUSC2,Tree,64,Juniperus scopulorum,Cupressaceae,tree,long-lived,native
+GABO2,Forb,63,Galium boreale,Rubiaceae,forb,long-lived,native
+SCBR3,Forb,63,Scutellaria brittonii,Lamiaceae,forb,long-lived,native
+JAAM,Shrub,61,Jamesia americana,Hydrangeaceae,shrub,long-lived,native
+APAN2,Forb,60,Apocynum androsaemifolium,Apocynaceae,forb,long-lived,native
+ERCA14,Forb,60,Erysimum capitatum,Brassicaceae,forb,short-lived,native
+POPR,Graminoid,56,Poa pratensis,Poaceae,graminoid,long-lived,exotic
+PRVI,Shrub,56,Prunus virginiana,Rosaceae,shrub,long-lived,native
+CHAN9,Forb,51,Chamerion angustifolium,Onagraceae,forb,long-lived,native
+2FORB,Forb,49,NA,NA,NA,NA,NA
+CEAR4,Forb,48,Cerastium arvense,Caryophyllaceae,forb,long-lived,native
+LIMU3,Forb,48,Lithospermum multiflorum,Boraginaceae,forb,long-lived,native
+COPA3,Forb,47,Collinsia parviflora,Scrophulariaceae,forb,short-lived,native
+ORPA3,Forb,44,NA,NA,NA,NA,NA
+DEADSHRUB,Shrub,43,NA,NA,NA,NA,NA
+POCO,Graminoid,43,Poa compressa,Poaceae,graminoid,long-lived,exotic
+ARGL,Forb,42,Arabis glabra,Brassicaceae,forb,short-lived,native
+IPAG,Forb,42,NA,NA,NA,NA,NA
+OXLA3,Forb,41,Oxytropis lambertii,Fabaceae,forb,long-lived,native
+PHMO4,Shrub,41,Physocarpus monogynus,Rosaceae,shrub,long-lived,native
+CHFR3,Forb,40,Chenopodium fremontii,Chenopodiaceae,forb,short-lived,native
+CEFE,Shrub,38,Ceanothus fendleri,Rhamnaceae,shrub,long-lived,native
+ERUM,Forb,38,Eriogonum umbellatum,Polygonaceae,forb,long-lived,native
+PYCH,Forb,38,Pyrola chlorantha,Pyrolaceae,forb,long-lived,native
+ELEL5,Graminoid,37,Elymus elymoides,Poaceae,graminoid,long-lived,native
+BRTE,Graminoid,35,Bromus tectorum,Poaceae,graminoid,short-lived,exotic
+COAU2,Forb,35,Corydalis aurea,Fumariaceae,forb,short-lived,native
+RUID,Shrub,34,Rubus idaeus,Rosaceae,shrub,long-lived,native
+SYAL,Shrub,34,Symphoricarpos albus,Caprifoliaceae,shrub,long-lived,native
+BADI,Forb,33,Bahia dissecta,Asteraceae,forb,short-lived,native
+GEAM3,Forb,33,NA,NA,NA,NA,NA
+ANNE,Forb,32,NA,NA,NA,NA,NA
+LUAR3,Forb,32,Lupinus argenteus,Fabaceae,forb,long-lived,native
+HIFE,Forb,30,Hieracium fendleri,Asteraceae,forb,long-lived,native
+DRAU,Forb,29,NA,NA,NA,NA,NA
+FRVE,Forb,29,Fragaria vesca,Rosaceae,forb,long-lived,native
+HEPA,Forb,29,NA,NA,NA,NA,NA
+HEPA11,Forb,29,Heuchera parvifolia,Saxifragaceae,forb,long-lived,native
+SOMU,Forb,28,NA,NA,NA,NA,NA
+SHCA,Shrub,27,Shepherdia canadensis,Elaeagnaceae,shrub,long-lived,native
+ACGL,Shrub,26,Acer glabrum,Aceraceae,shrub,long-lived,native
+ASPA13,Forb,26,Astragalus parryi,Fabaceae,forb,long-lived,native
+PECA,Forb,26,NA,NA,NA,NA,NA
+PIFL2,Tree,26,Pinus flexilis,Pinaceae,tree,long-lived,native
+ARABI2,Forb,25,Arabis,Brassicaceae,forb,unknown,native
+ERVE2,Forb,25,NA,NA,NA,NA,NA
+RIIN2,Shrub,25,NA,NA,NA,NA,NA
+SIDR,Forb,25,Silene drummondii,Caryophyllaceae,forb,long-lived,native
+SYPO4,Forb,25,Symphyotrichum porteri,Asteraceae,forb,long-lived,native
+LEKI2,Graminoid,24,Leucopoa kingii,Poaceae,graminoid,long-lived,native
+CIAR4,Forb,23,Cirsium arvense,Asteraceae,forb,long-lived,exotic
+ZIEL2,Forb,23,NA,NA,NA,NA,NA
+2GRAM,Graminoid,22,NA,NA,NA,NA,NA
+ASMI9,Forb,22,Astragalus miser,Fabaceae,forb,long-lived,native
+GADI2,Forb,22,NA,NA,NA,NA,NA
+POCO13,Forb,22,NA,NA,NA,NA,NA
+CHENO,Forb,21,NA,NA,NA,NA,NA
+PONE,Graminoid,21,Poa nemoralis,Poaceae,graminoid,long-lived,native
+TRDU,Forb,21,Tragopogon dubius,Asteraceae,forb,short-lived,exotic
+VETH,Forb,21,Verbascum thapsus,Scrophulariaceae,forb,short-lived,exotic
+ASAL7,Forb,20,NA,NA,NA,NA,NA
+CAOC2,Graminoid,20,NA,NA,NA,NA,NA
+NOFEG,Forb,19,NA,NA,NA,NA,NA
+PSSP6,Graminoid,19,NA,NA,NA,NA,NA
+ARDR,Forb,17,Arabis drummondii,Brassicaceae,forb,short-lived,native
+CANU4,Forb,17,Carduus nutans,Asteraceae,forb,short-lived,exotic
+CYFR2,Forb,17,Cystopteris fragilis,Dryopteridaceae,forb,long-lived,native
+ERFL,Forb,17,Erigeron flagellaris,Asteraceae,forb,short-lived,native
+GAAR,Forb,17,Gaillardia aristata,Asteraceae,forb,long-lived,native
+PICO,Tree,17,Pinus contorta,Pinaceae,tree,long-lived,native
+DAPA2,Graminoid,16,Danthonia parryi,Poaceae,graminoid,long-lived,native
+MARA7,Forb,16,Maianthemum racemosum,Liliaceae,forb,long-lived,native
+ROAC,Shrub,16,Rosa acicularis,Rosaceae,shrub,long-lived,native
+THFE,Forb,16,NA,NA,NA,NA,NA
+CHCA4,Forb,15,NA,NA,NA,NA,NA
+ELTR7,Graminoid,15,Elymus trachycaulus,Poaceae,graminoid,long-lived,native
+LASE,Forb,15,Lactuca serriola,Asteraceae,forb,long-lived,exotic
+POSE,Graminoid,15,NA,NA,NA,NA,NA
+RUDE,Shrub,15,Rubus deliciosus,Rosaceae,shrub,long-lived,native
+ARCA12,Forb,14,Artemisia campestris,Asteraceae,forb,short-lived,native
+FEID,Graminoid,14,NA,NA,NA,NA,NA
+LOIN5,Shrub,14,Lonicera involucrata,Caprifoliaceae,shrub,long-lived,native
+PHHE2,Forb,14,Phacelia heterophylla,Hydrophyllaceae,forb,short-lived,native
+ALPI2,Forb,13,Aliciella pinnatifida,Polemoniaceae,forb,short-lived,native
+ELAL7,Graminoid,13,Elymus albicans,Poaceae,graminoid,long-lived,native
+SABR6,Forb,13,NA,NA,NA,NA,NA
+CAIN14,Forb,12,Castilleja integra,Scrophulariaceae,forb,long-lived,native
+LIBO3,Forb,12,Linnaea borealis,Caprifoliaceae,forb,long-lived,native
+MARE11,Shrub,12,Mahonia repens,Berberidaceae,shrub,long-lived,native
+ORAS,Graminoid,12,NA,NA,NA,NA,NA
+PTAN2,Forb,12,NA,NA,NA,NA,NA
+2TREE,Tree,11,NA,NA,NA,NA,NA
+CHLE4,Forb,11,Chenopodium leptophyllum,Chenopodiaceae,forb,short-lived,native
+EPBR3,Forb,11,Epilobium brachycarpum,Onagraceae,forb,short-lived,native
+ERSP4,Forb,11,Erigeron speciosus,Asteraceae,forb,long-lived,native
+ORSE,Forb,11,NA,NA,NA,NA,NA
+ASTRA,Forb,10,NA,NA,NA,NA,NA
+BRIN2,Graminoid,10,Bromus inermis,Poaceae,graminoid,long-lived,exotic
+DAFR6,Shrub,10,NA,NA,NA,NA,NA
+DRPA2,Forb,10,NA,NA,NA,NA,NA
+AQCO,Forb,9,NA,NA,NA,NA,NA
+ARCO9,Forb,9,Arnica cordifolia,Asteraceae,forb,long-lived,native
+ASTE5,Forb,9,Astragalus tenellus,Fabaceae,forb,long-lived,native
+COLI2,Forb,9,Collomia linearis,Polemoniaceae,forb,short-lived,native
+FESTU,Graminoid,9,NA,NA,NA,NA,NA
+HIAL2,Forb,9,Hieracium albiflorum,Asteraceae,forb,long-lived,native
+PHHA,Forb,9,NA,NA,NA,NA,NA
+DRRE,Forb,8,NA,NA,NA,NA,NA
+EUBR,Forb,8,Euphorbia brachycera,Euphorbiaceae,forb,long-lived,native
+OXMU,Forb,8,NA,NA,NA,NA,NA
+POA,Graminoid,8,NA,NA,NA,NA,NA
+ANRO2,Forb,7,Antennaria rosea,Asteraceae,forb,long-lived,native
+CRVI4,Forb,7,Cryptantha virgata,Boraginaceae,forb,short-lived,native
+GRSQ,Forb,7,Grindelia squarrosa,Asteraceae,forb,short-lived,native
+GRSU,Forb,7,Grindelia subalpina,Asteraceae,forb,short-lived,native
+JUCO,Graminoid,7,NA,NA,NA,NA,NA
+MABI,Forb,7,Machaeranthera bigelovii,Asteraceae,forb,short-lived,native
+MABI,Forb,7,Machaeranthera bigelovii,asteraceae,forb,short-lived,native
+PESE11,Forb,7,Penstemon secundiflorus,Scrophulariaceae,forb,long-lived,native
+RARA,Forb,7,Ranunculus ranunculinus,Ranunculaceae,forb,long-lived,native
+SALIX,Shrub,7,NA,NA,NA,NA,NA
+SAMO2,Shrub,7,Salix monticola,Salicaceae,shrub,long-lived,native
+SENEC,Forb,7,NA,NA,NA,NA,NA
+SEWO,Forb,7,NA,NA,NA,NA,NA
+VAMY2,Shrub,7,Vaccinium myrtillus,Ericaceae,shrub,long-lived,native
+CAMI12,Forb,6,Castilleja miniata,Scrophulariaceae,forb,long-lived,native
+COMA25,Forb,6,Corallorhiza maculata,Orchidaceae,forb,long-lived,native
+ERAL4,Forb,6,Eriogonum alatum,Polygonaceae,forb,long-lived,native
+ERIGE2,Forb,6,NA,NA,NA,NA,NA
+GENTI,Forb,6,Gentiana,Gentianaceae,forb,unknown,native
+NAVI4,Graminoid,6,Nassella viridula,Poaceae,graminoid,long-lived,native
+OPPO,Forb,6,Opuntia polyacantha,Cactaceae,shrub,long-lived,native
+POACEAE,Graminoid,6,NA,NA,NA,NA,NA
+STELL,Forb,6,NA,NA,NA,NA,NA
+YUGL,Shrub,6,Yucca glauca,Agavaceae,shrub,long-lived,native
+ASLA27,Forb,5,NA,NA,NA,NA,NA
+ERFO3,Forb,5,Erigeron formosissimus,Asteraceae,forb,long-lived,native
+ERSU2,Forb,5,Erigeron subtrinervis,Asteraceae,forb,long-lived,native
+MOFI,Forb,5,Monarda fistulosa,Lamiaceae,forb,long-lived,native
+PEWH,Forb,5,NA,NA,NA,NA,NA
+PIMI,Graminoid,5,Piptatheropsis micrantha,Poaceae,graminoid,long-lived,native
+POGL9,Forb,5,NA,NA,NA,NA,NA
+POPA2,Graminoid,5,NA,NA,NA,NA,NA
+PSMA11,Forb,5,Pseudognaphalium macounii,Asteraceae,forb,short-lived,native
+SASC,Shrub,5,Salix scouleriana,Salicaceae,shrub,long-lived,native
+SOMI2,Forb,5,NA,NA,NA,NA,NA
+SYMPH,Shrub,5,Symphoricarpos,Caprifoliaceae,shrub,long-lived,native
+SYOC,Shrub,5,NA,NA,NA,NA,NA
+2SHRUB,Shrub,4,NA,NA,NA,NA,NA
+ACNE9,Graminoid,4,Achnatherum nelsonii,Poaceae,graminoid,long-lived,native
+AGSC5,Graminoid,4,Agrostis scabra,Poaceae,graminoid,long-lived,native
+BLTR,Graminoid,4,NA,NA,NA,NA,NA
+CIRSI,Forb,4,NA,NA,NA,NA,NA
+CIUN,Forb,4,Cirsium undulatum,Asteraceae,forb,short-lived,native
+DRABA,Forb,4,NA,NA,NA,NA,NA
+LIVU2,Forb,4,Linaria vulgaris,Scrophulariaceae,forb,long-lived,exotic
+POCU3,Graminoid,4,Poa cusickii,Poaceae,graminoid,long-lived,native
+SEER2,Forb,4,Senecio eremophilus,Asteraceae,forb,long-lived,native
+SEIN2,Forb,4,Senecio integerrimus,Asteraceae,forb,short-lived,native
+SYMPH4,Forb,4,Symphyotrichum,Asteraceae,forb,unknown,unknown
+ASTER,Forb,3,NA,NA,NA,NA,NA
+ASTERACEAE,Forb,3,NA,NA,NA,NA,NA
+CASTI2,Forb,3,NA,NA,NA,NA,NA
+DASP2,Graminoid,3,Danthonia spicata,Poaceae,graminoid,long-lived,native
+DRNE,Forb,3,NA,NA,NA,NA,NA
+GIOP,Forb,3,NA,NA,NA,NA,NA
+HOJU,Graminoid,3,Hordeum jubatum,Poaceae,graminoid,long-lived,native
+LIDA,Forb,3,Linaria dalmatica,Scrophulariaceae,forb,long-lived,exotic
+PAWE4,Forb,3,NA,NA,NA,NA,NA
+PENST,Forb,3,NA,NA,NA,NA,NA
+PEUN,Forb,3,Penstemon unilateralis,Scrophulariaceae,forb,long-lived,native
+PODO4,Forb,3,NA,NA,NA,NA,NA
+POSA19,Forb,3,NA,NA,NA,NA,NA
+RIMO2,Shrub,3,NA,NA,NA,NA,NA
+SONA,Forb,3,NA,NA,NA,NA,NA
+SYRO,Shrub,3,NA,NA,NA,NA,NA
+VACCI,Shrub,3,Vaccinium,Ericaceae,shrub,long-lived,native
+WOOR,Forb,3,NA,NA,NA,NA,NA
+ARLA4,Forb,2,NA,NA,NA,NA,NA
+ASCA11,Forb,2,NA,NA,NA,NA,NA
+BOGR2,Graminoid,2,Bouteloua gracilis,Poaceae,graminoid,long-lived,native
+BRCA5,Graminoid,2,Bromus carinatus,Poaceae,graminoid,long-lived,native
+CAGE2,Graminoid,2,NA,NA,NA,NA,NA
+CIVU,Forb,2,NA,NA,NA,NA,NA
+COCA5,Forb,2,Conyza canadensis,Asteraceae,forb,short-lived,native
+DACA3,Graminoid,2,NA,NA,NA,NA,NA
+DANTH,Graminoid,2,Danthonia,Poaceae,graminoid,long-lived,native
+LASC3,Forb,2,NA,NA,NA,NA,NA
+LEMO3,Forb,2,NA,NA,NA,NA,NA
+LUPIN,Forb,2,NA,NA,NA,NA,NA
+OECO2,Forb,2,NA,NA,NA,NA,NA
+OPUNT,Forb,2,Opuntia,Cactaceae,shrub,long-lived,native
+OXSE,Forb,2,NA,NA,NA,NA,NA
+PAJA,Forb,2,Paronychia jamesii,Caryophyllaceae,forb,long-lived,native
+PHYSA2,Forb,2,NA,NA,NA,NA,NA
+SCSC,Graminoid,2,Schizachyrium scoparium,Poaceae,graminoid,long-lived,native
+SECR,Forb,2,NA,NA,NA,NA,NA
+SERA,Forb,2,NA,NA,NA,NA,NA
+SESE2,Forb,2,NA,NA,NA,NA,NA
+SOMO,Forb,2,NA,NA,NA,NA,NA
+SONE,Forb,2,NA,NA,NA,NA,NA
+AGGI2,Graminoid,1,Agrostis gigantea,Poaceae,graminoid,long-lived,exotic
+ALTE,Forb,1,Allium textile,Liliaceae,forb,long-lived,native
+ANAN2,Forb,1,NA,NA,NA,NA,NA
+ANLU2,Forb,1,NA,NA,NA,NA,NA
+ANMA,Forb,1,Anaphalis margaritacea,Asteraceae,forb,long-lived,native
+ARHI,Forb,1,NA,NA,NA,NA,NA
+ARNIC,Forb,1,NA,NA,NA,NA,NA
+BRGR,Forb,1,Brickellia grandiflora,Asteraceae,forb,long-lived,native
+CAAQ,Graminoid,1,NA,NA,NA,NA,NA
+CABU,Forb,1,NA,NA,NA,NA,NA
+CAGU,Forb,1,NA,NA,NA,NA,NA
+CALI4,Forb,1,Castilleja linariifolia,Scrophulariaceae,forb,long-lived,native
+CAPR5,Graminoid,1,NA,NA,NA,NA,NA
+CASI12,Graminoid,1,NA,NA,NA,NA,NA
+CEVE,Shrub,1,Ceanothus velutinus,Rhamnaceae,shrub,long-lived,native
+CHAL7,Forb,1,Chenopodium album,Chenopodiaceae,forb,short-lived,exotic
+CICL,Forb,1,NA,NA,NA,NA,NA
+CLEMA,Forb,1,NA,NA,NA,NA,NA
+CLOC2,Forb,1,Clematis occidentalis,Ranunculaceae,forb,long-lived,native
+DAIN,Graminoid,1,NA,NA,NA,NA,NA
+DEIN5,Forb,1,Descurainia incana,Brassicaceae,forb,short-lived,native
+ELCA4,Graminoid,1,Elymus canadensis,Poaceae,graminoid,long-lived,native
+ELLA3,Graminoid,1,NA,NA,NA,NA,NA
+EPCI,Forb,1,Epilobium ciliatum,Onagraceae,forb,long-lived,native
+ERCA2,Forb,1,NA,NA,NA,NA,NA
+ERCA4,Forb,1,NA,NA,NA,NA,NA
+EREL9,Forb,1,NA,NA,NA,NA,NA
+ERPU2,Forb,1,NA,NA,NA,NA,NA
+GNPA,Forb,1,NA,NA,NA,NA,NA
+HECO26,Graminoid,1,Hesperostipa comata,Poaceae,graminoid,long-lived,native
+HEPU3,Forb,1,Helianthus pumilus,Asteraceae,forb,long-lived,native
+HIERA,Forb,1,NA,NA,NA,NA,NA
+HORDE,Graminoid,1,NA,NA,NA,NA,NA
+LILE3,Forb,1,NA,NA,NA,NA,NA
+LITHO3,Forb,1,Lithospermum,Boraginaceae,forb,long-lived,native
+MUAS,Graminoid,1,Muhlenbergia asperifolia,Poaceae,graminoid,long-lived,native
+NECA2,Forb,1,Nepeta cataria,Lamiaceae,forb,long-lived,exotic
+OECA10,Forb,1,NA,NA,NA,NA,NA
+OXYTR,Forb,1,NA,NA,NA,NA,NA
+PASM,Graminoid,1,Pascopyrum smithii,Poaceae,graminoid,long-lived,native
+PATR7,Forb,1,NA,NA,NA,NA,NA
+PHPR3,Graminoid,1,Phleum pratense,Poaceae,graminoid,long-lived,exotic
+PIEX4,Graminoid,1,NA,NA,NA,NA,NA
+POPE8,Forb,1,NA,NA,NA,NA,NA
+RHTR,Shrub,1,Rhus trilobata,Anacardiaceae,shrub,long-lived,native
+RIAM2,Shrub,1,NA,NA,NA,NA,NA
+RIBES,Shrub,1,NA,NA,NA,NA,NA
+RIVI3,Shrub,1,NA,NA,NA,NA,NA
+ROAR3,Shrub,1,Rosa arkansana,Rosaceae,shrub,long-lived,native
+SCLA,Forb,1,NA,NA,NA,NA,NA
+SESP3,Forb,1,Senecio spartioides,Asteraceae,forb,long-lived,native
+SIAL2,Forb,1,Sisymbrium altissimum,Brassicaceae,forb,short-lived,exotic
+SIAN2,Forb,1,Silene antirrhina,Caryophyllaceae,forb,short-lived,native
+SILEN,Forb,1,NA,NA,NA,NA,NA
+SOVE6,Forb,1,NA,NA,NA,NA,NA
+STAM2,Forb,1,NA,NA,NA,NA,NA
+THAR5,Forb,1,Thlaspi arvense,Brassicaceae,forb,short-lived,exotic
+THDI4,Forb,1,Thermopsis divaricarpa,Fabaceae,forb,long-lived,native
+TROC,Forb,1,Tradescantia occidentalis,Commelinaceae,forb,long-lived,native
+VAOC2,Forb,1,NA,NA,NA,NA,NA
