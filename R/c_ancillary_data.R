@@ -12,7 +12,8 @@ pts <- st_read("data/pha_eva_points.gpkg")
 plys |>
   filter(SiteCode == "ESV") |>
   ggplot() +
-  geom_sf(aes(fill = TreatmentUnit))
+  geom_sf(aes(fill = TreatmentUnit)) +
+  geom_sf(data=pts |>filter(SiteCode == "ESV"))
 
 plys |>
   filter(SiteCode == "PHA") |>
@@ -131,5 +132,86 @@ ggplot(plotvisit |> filter(project == "PHA")) +
 geom_sf(aes(color = PlotTreatmentStatus)) 
 
  
-# usda plant trait data
+# topoterra
+
+climate_norms <- terra::rast("data/big/topoterra_hist_1961-2022.tif")
+climate_2012 <- terra::rast("data/big/topoterra_hist_2012.tif")
+climate_2013 <- terra::rast("data/big/topoterra_hist_2013.tif")
+climate_2017 <- terra::rast("data/big/topoterra_hist_2017.tif")
+climate_2018 <- terra::rast("data/big/topoterra_hist_2018.tif")
+
+t12s <- plot_visits |> dplyr::filter(trt_year == 2012) |> pull(PlotCode) |> unique()
+t17s <- plot_visits |> dplyr::filter(trt_year == 2017) |> pull(PlotCode) |> unique()
+
+yearly_files <- list.files('data/big/', pattern = 'topoterra_hist_\\d{4}.tif', full.names = TRUE)
+
+xtnt <- pts |>
+  st_buffer(dist = 10000) |>
+  st_transform(crs = st_crs(climate_norms)) |>
+  terra::ext()
+
+yearly_def <- list()
+for(i in 1:length(yearly_files)){
+  nm <- str_c('def_', str_extract(yearly_files[i], '\\d{4}'))
+  yearly_def[[i]] <- terra::rast(yearly_files[i])[[2]] |>
+    terra::crop(xtnt)
+  names(yearly_def[[i]]) <- nm
+}
+yearly_def <-terra::rast(yearly_def)
+normal_def <- terra::app(yearly_def, mean)
+# plot(normal_def); plot(pts |> st_transform(crs = st_crs(climate_2012)), add=T)
+sd_def <- terra::app(yearly_def,sd)
+# plot(sd_def); plot(pts |> st_transform(crs = st_crs(climate_2012)), add=T)
+
+yearly_z <- list()
+for(i in 1:30){
+  nm <- str_c('def_z_', str_extract(yearly_files[i], '\\d{4}'))
+  yearly_z[[i]] <- (yearly_def[[i]] - normal_def)/sd_def
+  names(yearly_z[[i]]) <- nm
+}
+yearly_z <- terra::rast(yearly_z)
+
+norms <- mutate(pts |> dplyr::select(PlotCode), terra::extract(climate_norms, pts, ID=F)) |>
+  dplyr::rename(aet_norm = aet, def_norm = def, tmax_norm = tmax, tmin_norm = tmin) |>
+  st_set_geometry(NULL)
+clim12 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(climate_2012, pts, ID=F)) |>
+  dplyr::rename(aet_trt = aet, def_trt = def, tmax_trt = tmax, tmin_trt = tmin) |>
+  st_set_geometry(NULL) |>
+  dplyr::filter(PlotCode %in% t12s)
+clim17 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(climate_2017, pts,  ID=F)) |>
+  dplyr::rename(aet_trt = aet, def_trt = def, tmax_trt = tmax, tmin_trt = tmin) |>
+  st_set_geometry(NULL) |>
+  dplyr::filter(PlotCode %in% t17s) 
+clim13 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(climate_2013, pts,  ID=F)) |>
+  dplyr::rename(aet_trt1 = aet, def_trt1 = def, tmax_trt1 = tmax, tmin_trt1 = tmin) |>
+  st_set_geometry(NULL) |>
+  dplyr::filter(PlotCode %in% t12s)
+clim18 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(climate_2018, pts,  ID=F)) |>
+  dplyr::rename(aet_trt1 = aet, def_trt1 = def, tmax_trt1 = tmax, tmin_trt1 = tmin) |>
+  st_set_geometry(NULL) |>
+  dplyr::filter(PlotCode %in% t17s)
+
+z12 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(yearly_z$def_z_2012, pts, ID=F)) |>
+  st_set_geometry(NULL) |>
+  dplyr::rename(def_z_trt = 2) |>
+  dplyr::filter(PlotCode %in% t12s)
+z13 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(yearly_z$def_z_2013, pts, ID=F)) |>
+  st_set_geometry(NULL) |>
+  dplyr::rename(def_z_trt1 = 2) |>
+  dplyr::filter(PlotCode %in% t12s)
+z17 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(yearly_z$def_z_2017, pts, ID=F)) |>
+  st_set_geometry(NULL) |>
+  dplyr::rename(def_z_trt = 2) |>
+  dplyr::filter(PlotCode %in% t17s)
+z18 <- mutate(pts |> dplyr::select(PlotCode), terra::extract(yearly_z$def_z_2018, pts, ID=F)) |>
+  st_set_geometry(NULL) |>
+  dplyr::rename(def_z_trt1 = 2) |>
+  dplyr::filter(PlotCode %in% t17s)
+
+norms |>
+  left_join(clim12 |> bind_rows(clim17)) |>
+  left_join(clim13 |> bind_rows(clim18)) |>
+  left_join(z12 |> bind_rows(z17)) |>
+  left_join(z13 |> bind_rows(z18)) |>
+  write_csv("data/plot_climate.csv")
 

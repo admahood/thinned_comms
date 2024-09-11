@@ -80,8 +80,11 @@ exotic_cover <- spp |>
   tidyr::replace_na(list('trt_u_adj' = "PHA-1-2"))
 
 # joining it all together
+clim <- read_csv('data/plot_climate.csv')
+
 tt <- st_read("data/terrain_by_plot.gpkg") |>
-  st_set_geometry(NULL)
+  st_set_geometry(NULL) |> 
+  left_join(clim)
 
 plot_level_metrics <- cp_tree |>
   mutate(site = str_sub(PlotCode, 1,1)) |>
@@ -123,11 +126,13 @@ if(length(new.packages)) install.packages(new.packages)
 for(i in package.list){library(i, character.only = T)}
 ## Comparing with and without non-linear CWD term
 
-alt1 <- glmmTMB(nspp_native ~   tpa + phase_adj  + slope + twi + hli  + exotic_cover+ 
+alt1 <- glmmTMB(nspp_native ~   tpa + phase_adj  + slope + twi + hli +
+                  exotic_cover  + ns(def_norm,2) + def_z_trt +
                   (1|trt_u_adj/PlotCode), 
                 data = plot_level_metrics, family = poisson(),
                 na.action = "na.fail"); summary(alt1); performance::r2(alt1); diagnose(alt1); car::Anova(alt1)
-alt2 <-  glmmTMB(nspp_native ~   tpa + phase_adj + treated + slope + twi + hli  + exotic_cover+ 
+alt2 <-  glmmTMB(nspp_native ~   tpa + phase_adj + treated + slope + twi + hli +
+                   exotic_cover+  ns(def_norm,2) + def_z_trt +
                    (1|trt_u_adj/PlotCode), 
                  data = plot_level_metrics, family = poisson(),
                  na.action = "na.fail"); summary(alt2); performance::r2(alt2); diagnose(alt2)
@@ -142,6 +147,8 @@ plot(simResid)
 library(ggeffects)
 
 ggpubr::ggarrange(
+  plot(ggeffects::ggpredict(alt1, terms = c("def_norm")),  show_title=F),
+  plot(ggeffects::ggpredict(alt1, terms = c("def_z_trt")),  show_title=F),
   plot(ggeffects::ggpredict(alt1, terms = c("tpa")),  show_title=F),
   plot(ggeffects::ggpredict(alt1, terms = c("twi")),  show_title=F),
   plot(ggeffects::ggpredict(alt1, terms = c("slope")),  show_title=F),
@@ -171,12 +178,13 @@ plot(simResid)
 
 # probably cover of exotics is more important than species richness
 
-ec1 <- glmmTMB(ec_binary ~ phase_adj + treated + tpa + site + slope + native_cover +
+ec1 <- glmmTMB(ec_binary ~ phase_adj + treated + tpa + site +  native_cover + ns(tmin_norm, 2) + def_z_trt +
                   (1|trt_u_adj/PlotCode), data = plot_level_metrics, family = binomial(),
                 na.action = "na.fail");summary(ec1); performance::r2(ec1); diagnose(ec1); car::Anova(ec1)
 dredge(ec1) -> ddrd;ddrd
 
 ggpubr::ggarrange(
+  plot(ggeffects::ggpredict(alt1, terms = c("tmin_norm")), show_residuals = TRUE, jitter = .08, show_title=F),
   plot(ggeffects::ggpredict(alt1, terms = c("tpa")), show_residuals = TRUE, jitter = .08, show_title=F),
   plot(ggeffects::ggpredict(alt1, terms = c("twi")), show_residuals = TRUE, jitter = .01, show_title=F),
   plot(ggeffects::ggpredict(alt1, terms = c("slope")), show_residuals = TRUE, jitter = .08, show_title=F),
@@ -190,15 +198,24 @@ ggpubr::ggarrange(
 simResid <- simulateResiduals(alt2)
 plot(simResid)
 
-inv1 <- glmmTMB(invaded ~ treated + phase_adj + site + slope + native_cover +
+inv1 <- glmmTMB(invaded ~ treated + phase_adj + site  + native_cover +
                   shannon_native + 
+                  def_z_trt + ns(def_norm, 2) + 
                  (1|trt_u_adj/PlotCode), data = plot_level_metrics, family = binomial(),
                na.action = "na.fail");summary(inv1); performance::r2(inv1); diagnose(inv1); car::Anova(inv1)
 
-inv2 <- glmmTMB(invaded ~ tpa + ba_m2pherha + quadratic_mean_diameter + site + slope + native_cover +
-                  shannon_native + twi + 
+inv2 <- glmmTMB(invaded ~ 
+                  # tpa +
+                  ba_m2pherha +
+                  # treated +
+                  site +
+                  native_cover +
+                  shannon_native +
+                  ns(def_norm,2) +  
+                  def_z_trt +
                   (1|trt_u_adj/PlotCode), data = plot_level_metrics, family = binomial(),
-                na.action = "na.fail");summary(inv2); performance::r2(inv2); diagnose(inv2); car::Anova(inv2)
+                na.action = "na.fail");summary(inv2); performance::r2(inv2); diagnose(inv2); car::Anova(inv2); performance::check_collinearity(inv2)
+
 AIC(inv1, inv2)
 simResid <- simulateResiduals(inv1)
 plot(simResid)
@@ -206,22 +223,26 @@ simResid <- simulateResiduals(inv2)
 plot(simResid)
 
 ggpubr::ggarrange(
-  plot(ggeffects::ggpredict(inv2, terms = c("tpa")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("slope")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("twi")), show_title=F),
+  plot(ggeffects::ggpredict(inv2, terms = c("def_norm")), show_title=F),
+  plot(ggeffects::ggpredict(inv2, terms = c("def_z_trt")), show_title=F),
+  # plot(ggeffects::ggpredict(inv2, terms = c("tpa")), show_title=F),
+  # plot(ggeffects::ggpredict(inv2, terms = c("slope")), show_title=F),
+  # plot(ggeffects::ggpredict(inv2, terms = c("twi")), show_title=F),
   plot(ggeffects::ggpredict(inv2, terms = c("ba_m2pherha")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("quadratic_mean_diameter")), show_title=F),
+  # plot(ggeffects::ggpredict(inv2, terms = c("quadratic_mean_diameter")), show_title=F),
   plot(ggeffects::ggpredict(inv2, terms = c("site")), show_title=F),
   plot(ggeffects::ggpredict(inv2, terms = c("native_cover")), show_title=F),
   plot(ggeffects::ggpredict(inv2, terms = c("shannon_native")), show_title=F),
-  ncol=4, nrow=2) |>
-  ggsave(filename = 'out/invaded_glmm_partials.png', width=10, height=5, bg="white")
+  ncol=3, nrow=2) |>
+  ggsave(filename = 'out/invaded_glmm_partials.png', width=7, height=5, bg="white")
 
 ggpubr::ggarrange(
+  plot(ggeffects::ggpredict(inv1, terms = c("def_z_trt")), show_title=F),
+  plot(ggeffects::ggpredict(inv1, terms = c("def_norm")), show_title=F),
   plot(ggeffects::ggpredict(inv1, terms = c("treated")), show_title=F),
   plot(ggeffects::ggpredict(inv1, terms = c("phase_adj")), show_title=F),
-  plot(ggeffects::ggpredict(inv1, terms = c("site")), show_title=F),
-  plot(ggeffects::ggpredict(inv1, terms = c("slope")), show_title=F),
+  # plot(ggeffects::ggpredict(inv1, terms = c("site")), show_title=F),
+  # plot(ggeffects::ggpredict(inv1, terms = c("slope")), show_title=F),
   plot(ggeffects::ggpredict(inv1, terms = c("native_cover")), show_title=F),
   plot(ggeffects::ggpredict(inv1, terms = c("shannon_native")), show_title=F),
   ncol=3, nrow=2) |>

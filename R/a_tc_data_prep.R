@@ -503,6 +503,8 @@ ggsave("out/data_coverage.png", width=10, height=8)
 
 
 # creating a species list ======================================================
+
+
 comm_raw |>
   filter(!CodeType %in% c("Substrate", 
                           "FWD", 
@@ -541,6 +543,51 @@ sp_list <- readr::read_csv("data/species_list_alm_modified.csv") |>
   dplyr::select(-notes)
 print(sp_list, n=300)
 
+tenyp <- plot_visits_10y |> pull(PlotCode) |> unique()
+
+
+plotwise_invasion <- cover_plot |>
+  left_join(sp_list |> mutate(SpeciesCode = str_to_lower(SpeciesCode))) |>
+  filter(!is.na(prevalence),
+         NativityL48 == "exotic") |>
+  group_by(new_visit_code, NativityL48) |>
+  summarise(cover = sum(cover)) |>
+  ungroup() |>
+  tidyr::separate(new_visit_code, into = c('plot', 'phase'), sep = "\\.") %>%
+  pivot_wider(names_from = phase, values_from = cover, values_fill = 0) |>
+  mutate(`post10-11` = ifelse(!plot %in% tenyp, NA, `post10-11`)) |>
+  left_join(dplyr::select(plot_visits, plot = PlotCode, trt = PlotTreatmentStatus) |> unique())
+
+plotwise_invasion |>
+  arrange(`post10-11`) |>
+  print(n=99)
+
+plotwise_invasion  |>
+  mutate_if(is.numeric, function(x) ifelse(x >0, 1,0)) %>%
+  pivot_longer(cols = names(.)[c(3:6)]) |>
+  group_by(name, trt) |>
+  summarise(fraction_invaded = mean(value, na.rm=T)) |>
+  ungroup() |>
+  ggplot(aes(x=name, y=fraction_invaded, group = trt, color = trt)) +
+  geom_line() +
+  ggthemes::theme_clean()
+
+plotwise_invasion  %>%
+  pivot_longer(cols = names(.)[c(3:6)]) |>
+  group_by(name, trt) |>
+  summarise(fraction_invaded = mean(value, na.rm=T)) |>
+  ungroup() |>
+  ggplot(aes(x=name, y=fraction_invaded, group = trt, color = trt)) +
+  geom_line() +
+  ggthemes::theme_clean()
+
+ggplot(data.frame(x = c(-1,1,5,10), y = c(49/71, 50/71, 15/71, 4/43))) +
+  geom_line(aes(x=x,y=y)) +
+  xlab("Years Since Treatment") +
+  ylab("Fraction Uninvaded") +
+  ggthemes::theme_clean()
+
+ggsave("out/fraction_uninvaded.png")
 
 # putting together ancillary data for glmm analysis: seedlings, saplings, cp_tree
 
