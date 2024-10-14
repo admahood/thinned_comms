@@ -3,10 +3,10 @@ library(lme4)
 library(glmmTMB)
 library(ggeffects)
 
-read_csv("data/RDS-2023-0063/Data/fuels.csv")
-read_csv("data/RDS-2023-0063/Data/saplings.csv")
-read_csv("data/RDS-2023-0063/Data/seedlings.csv")
-read_csv("data/RDS-2023-0063/Data/trees.csv")
+# read_csv("data/RDS-2023-0063/Data/fuels.csv")
+# read_csv("data/RDS-2023-0063/Data/saplings.csv")
+# read_csv("data/RDS-2023-0063/Data/seedlings.csv")
+# read_csv("data/RDS-2023-0063/Data/trees.csv")
 read_csv("data/RDS-2023-0063/Data/understory.csv") |> filter(ORIGIN == "Exotic", COVER>0) |> 
   group_by(LFCODE, GENUS, YEAR) |>
   summarise(n=n()) |>
@@ -66,10 +66,26 @@ exotic_richness <- read_csv("data/RDS-2023-0063/Data/understory.csv") |>
   janitor::clean_names() |>
   group_by(block, trt, year, plot) |>
   filter(origin == 'Exotic', cover > 0 ) |>
-  summarise(nspp = n()) |>
+  summarise(nspp_exotic = n()) |>
   ungroup() |>
   mutate(trt = str_to_lower(trt),
     year = as.factor(year),
+         plot = str_c(block, "_", plot),
+         block = as.factor(block)) |>
+  left_join(seedlings) |> 
+  left_join(saplings) |>
+  left_join(ba_20) |>
+  tidyr::replace_na(list(seedling_density_ha = 0,
+                         sapling_density_ha = 0)) |> print(n=99)
+
+native_richness <- read_csv("data/RDS-2023-0063/Data/understory.csv") |>
+  janitor::clean_names() |>
+  group_by(block, trt, year, plot) |>
+  filter(origin == 'Native', cover > 0 ) |>
+  summarise(nspp_native = n()) |>
+  ungroup() |>
+  mutate(trt = str_to_lower(trt),
+         year = as.factor(year),
          plot = str_c(block, "_", plot),
          block = as.factor(block)) |>
   left_join(seedlings) |> 
@@ -95,7 +111,73 @@ invaded <- read_csv("data/RDS-2023-0063/Data/understory.csv") |>
   mutate(burned = ifelse(trt %in% c('bo', 'tb'), 'burned', 'unburned'),
          treated = ifelse(trt == 'co', '0untreated', 'treated')) |>
   tidyr::replace_na(list(seedling_density_ha = 0,
+                         sapling_density_ha = 0)) 
+
+native <- read_csv("data/RDS-2023-0063/Data/understory.csv") |>
+  janitor::clean_names() |>
+  group_by(block, trt, year, plot) |>
+  filter(origin == 'Native') |>
+  summarise(cover_native = sum(cover)) |>
+  ungroup() |>
+  mutate(year = as.factor(year),
+         plot = str_c(block, "_", plot),
+         block = as.factor(block),
+         trt = str_to_lower(trt)) |>
+  left_join(seedlings) |> 
+  left_join(saplings) |>
+  left_join(ba_20) |>
+  mutate(burned = ifelse(trt %in% c('bo', 'tb'), 'burned', 'unburned'),
+         treated = ifelse(trt == 'co', '0untreated', 'treated')) |>
+  tidyr::replace_na(list(seedling_density_ha = 0,
                          sapling_density_ha = 0)) |> print(n=99)
+
+catford <-
+  left_join(invaded, native) |>
+  left_join(native_richness) |>
+  left_join(exotic_richness) |>
+  tidyr::replace_na(list(nspp_exotic = 0)) |>
+  mutate(rel_exotic_richness = nspp_exotic/(nspp_native + nspp_exotic),
+         rel_exotic_cover = cover_exotics/(cover_native + cover_exotics),
+         trt = case_when(trt == 'co' ~ "Control",
+                         trt == 'tb' ~ "TRT: Thin + Burn",
+                         trt == "to" ~ 'TRT: Thin',
+                         trt == 'bo' ~ 'TRT: Burn'))
+# write_csv(catford, 'data/hood_catford.csv')
+ggplot(y = trt, x = rel_exotic_richness) +
+  geom_boxplot() +
+  facet_wrap(~year)
+ggplot(y = trt, x = rel_exotic_cover) +
+  geom_boxplot() +
+  facet_wrap(~year)
+
+# brm ============
+
+mb <- brm(rel_exotic_cover ~ year + ba_m2_ha*burned + (1|block/plot), data = catford, family = 'zero_inflated_beta')
+summary(mb)
+mb1 <- brm(rel_exotic_cover ~ year*trt + (1|block/plot), data = catford, family = 'zero_inflated_beta')
+summary(mb1); plot(conditional_effects(mb1), ask = FALSE)
+mb2 <- brm(rel_exotic_richness ~ year*trt + (1|block/plot), data = catford, family = 'zero_inflated_beta')
+summary(mb2); plot(conditional_effects(mb2), ask = FALSE)
+mb3 <- brm(invaded ~ year*trt + (1|block/plot), data = catford, family = 'bernoulli')
+summary(mb3);plot(conditional_effects(mb3), ask = FALSE)
+
+conditional_effects(mb3)[[3]] |> as.data.frame() |> dplyr::rename(value = 3) |> mutate(name = 'invaded') -> di
+conditional_effects(mb2)[[3]] |> as.data.frame() |> dplyr::rename(value = 3) |> mutate(name = 'exotic_relative_richness') -> der
+conditional_effects(mb1)[[3]] |> as.data.frame() |> dplyr::rename(value = 3) |> mutate(name = 'exotic_relative_cover') -> dec
+
+save(mb1, mb2, mb3, file = "data/hood_bayesian_models.rda")
+
+bind_rows(di, der, dec) |>
+  ggplot(aes(x=estimate__, y = trt, color = trt)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = lower__, xmax = upper__, y=trt)) +
+  facet_wrap(name~year, scales = 'free_x', ncol=2) +
+  ggthemes::theme_clean() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = 'none',
+        panel.background = element_rect(color = 'black'),
+        axis.title = element_blank()) 
+ggsave("out/hood_et_al_plot.png", bg='white', width =7, height =7)
 
 mc <- lme4::glmer(invaded ~ year + ba_m2_ha*burned + (1|block/plot), family = 'binomial', data = invaded)##datawizard::standardise(invaded, exclude = 'invaded'))
 summary(mc); performance::check_model(mc); performance::r2(mc)

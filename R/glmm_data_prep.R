@@ -103,18 +103,35 @@ plot_level_metrics <- cp_tree |>
   left_join(exotic_cover) |>
   replace_na(list(exotic_cover = 0)) |>
   mutate(no_exotics = 100 - exotic_cover,
-         ec_binary = cbind(exotic_cover, no_exotics),
+         # ec_binary = cbind(exotic_cover, no_exotics),
          log_saplingba = log(sapling_ba_ft_per_acre + 1),
          treated = case_when(PlotTreatmentStatus == "Control" ~ "not_treated",
                              PlotTreatmentStatus == "Treatment" & phase_adj == "01_Pre" ~ "not_treated",
                              PlotTreatmentStatus == "Treatment" & phase_adj != "01_Pre" ~ "treated") |> as.factor(),
-         invaded = ifelse(exotic_cover >0, 1, 0)
-         ) 
+         invaded = ifelse(exotic_cover > 0, 1, 0),
+         exotic_relative_cover = 100 * (exotic_cover/(native_cover + exotic_cover)),
+         exotic_relative_richness = 100 * (nspp_exotic/(nspp_native + nspp_exotic))
+         )
 
 summary(plot_level_metrics)
-
+glimpse(plot_level_metrics)
 write_csv(plot_level_metrics, "data/plot_level_data.csv")
 
+ggplot(plot_level_metrics, aes(x=phase_adj, y=exotic_relative_cover, fill = PlotTreatmentStatus)) +
+  geom_boxplot(outliers = F)
+
+ggplot(plot_level_metrics, aes(x=phase_adj, y=exotic_relative_richness, fill = PlotTreatmentStatus)) +
+  geom_boxplot(outliers = F)
+
+# catford 2012 metrics
+plot_level_metrics |>
+  dplyr::select(phase_adj, exotic_relative_cover, PlotTreatmentStatus, exotic_relative_richness) |>
+  pivot_longer(cols = c(exotic_relative_cover,exotic_relative_richness)) |>
+  ggplot(aes(x=phase_adj, y=value, fill = PlotTreatmentStatus)) +
+  geom_boxplot(outliers = F) +
+  facet_wrap(~name, scales = 'free_y', ncol=1) +
+  ggtitle("Invasion metrics recommended by Catford et al (2012)")
+ggsave('out/catford_invasion_metrics.png', bg='white')
 
 # model exploration (Kyle Rodman's code from Springer et al 2023)
 package.list <- c("here", "tidyverse", "glmmTMB", "DHARMa", "MuMIn", "ggplot2", 
