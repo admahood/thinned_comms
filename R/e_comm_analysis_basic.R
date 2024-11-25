@@ -6,28 +6,61 @@ species_list <- read_csv("data/species_list_alm_modified.csv") |>
   unique() |> # one duplicate in species list
   dplyr::select(-notes)
 
+
+
 # which species were there before - ie are introductions after treatment from the regional pool or outside?
 exotics <-
   species_list |>
   filter(NativityL48 == "exotic") |>
   mutate(SpeciesCode = str_to_lower(SpeciesCode))
 
+c_vs_t <- plot_visits |>
+  dplyr::select(PlotCode, PlotTreatmentStatus) |>
+  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Control", PlotTreatmentStatus)) |>
+  unique()
+
 exotic_prevalence <- comm[, names(comm) %in% exotics$SpeciesCode] |>
   tibble::rownames_to_column('new_visit_code') |>
   tidyr::separate(new_visit_code, into = c('PlotCode', 'phase_adj'), sep = "\\.") |>
   pivot_longer(-c(PlotCode, phase_adj)) |>
   mutate(occurrence = ifelse(value >0, 1, 0)) |>
-  group_by(phase_adj, name) |>
+  left_join(c_vs_t) |>
+  group_by(phase_adj, PlotTreatmentStatus, name) |>
   summarise(prevalence = sum(occurrence)) |>
+  ungroup() |>
+  mutate(phase_adj = str_c(phase_adj, "_", PlotTreatmentStatus)) |>
+  dplyr::select(-PlotTreatmentStatus) |>
   pivot_wider(names_from = phase_adj, values_from = prevalence) |>
   left_join(exotics |> dplyr::rename('name' = 'SpeciesCode')) |>
-  dplyr::select(FinalName, pretreatment = `01_Pre`, posttreatemnt = `post0-1`, fiveyeearspost = `post04-5`, tenyearspost = `post10-11`)
+  dplyr::select(FinalName, 
+                starts_with('01'), starts_with('post'))
 
 write_csv(exotic_prevalence, file = "out/exotic_prevalence.csv")
 
 ggplot(exotic_only, aes(x=phase_adj, y=occurrence, color = name)) +
   geom_boxplot() +
   facet_wrap(~name, scales = "free_y")
+
+# number of plots invaded
+
+invasion_freq <- comm[, names(comm) %in% exotics$SpeciesCode] |>
+  tibble::rownames_to_column('new_visit_code') |>
+  tidyr::separate(new_visit_code, into = c('PlotCode', 'phase_adj'), sep = "\\.") |>
+  pivot_longer(-c(PlotCode, phase_adj)) |>
+  mutate(occurrence = ifelse(value >0, 1, 0)) |>
+  left_join(c_vs_t) |>
+  group_by(phase_adj, PlotTreatmentStatus, PlotCode) |>
+  summarise(invaded = ifelse(sum(occurrence)>0, 1, 0)) |>
+  ungroup() |>
+  group_by(phase_adj, PlotTreatmentStatus) |>
+  summarise(n_invaded_plots = sum(invaded),
+            n_plots = n()) |>
+  ungroup() |>
+  mutate(percent_invaded = n_invaded_plots/n_plots *100) ##|>
+  # dplyr::select(-n_invaded_plots, -n_plots) |>
+  # pivot_wider(names_from = phase_adj, values_from = percent_invaded) |>
+  # janitor::clean_names()
+write_csv(invasion_freq, "out/invasion_freq.csv")
 
 # do difference from pre-treatment
 cp <- cover_plot |>

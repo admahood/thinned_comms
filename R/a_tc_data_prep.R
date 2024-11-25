@@ -587,7 +587,7 @@ ggplot(data.frame(x = c(-1,1,5,10), y = c(49/71, 50/71, 15/71, 4/43))) +
   ylab("Fraction Uninvaded") +
   ggthemes::theme_clean()
 
-ggsave("out/fraction_uninvaded.png")
+# ggsave("out/fraction_uninvaded.png")
 
 # putting together ancillary data for glmm analysis: seedlings, saplings, cp_tree
 

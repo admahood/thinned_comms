@@ -1,0 +1,9 @@
+phase_adj,PlotTreatmentStatus,n_invaded_plots,n_plots,percent_invaded
+01_Pre,Control,10,43,23.25581395348837
+01_Pre,Treatment,12,42,28.57142857142857
+post0-1,Control,5,43,11.627906976744185
+post0-1,Treatment,16,41,39.02439024390244
+post04-5,Control,20,41,48.78048780487805
+post04-5,Treatment,36,42,85.71428571428571
+post10-11,Control,17,23,73.91304347826086
+post10-11,Treatment,22,24,91.66666666666666
