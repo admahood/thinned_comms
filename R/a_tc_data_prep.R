@@ -53,8 +53,9 @@ plot_visits <- plot_visits |>
 plot_visits |>
   group_by(trt_year) |>
   summarise(n_plots = length(unique(PlotCode))) |>
-  print(n=21)
-
+  print(n=21)|>
+  filter(trt_year != 2017)
+# 
 plot_visits_10y <- plot_visits|>
   filter(trt_year != 2017);glimpse(plot_visits)
 
@@ -79,7 +80,8 @@ khr_fuels <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_1KhrFuel")) |>
   left_join(new_vcs) |>
-  dplyr::select(-ID, -DataFlag); glimpse(khr_fuels)
+  dplyr::select(-ID, -DataFlag)|>
+  filter(trt_year != 2017); glimpse(khr_fuels)
 # 
 # khr_fuels |>
 #   group_by(phase_adj, trt_year, PlotSize) |>
@@ -104,6 +106,7 @@ cp_tree <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_CenterPlotTreeData")) |>
   left_join(new_vcs)|>
+  filter(trt_year != 2017)|>
   dplyr::select(-DataFlag, -TreeOrder, -PlotSize, -TagID, -DeadTop, -ForkedTrunk, 
                 -WitchesBroom, -MistletoeShoots, -FireScar, -LightningScar, -Conks, 
                 -HollowBole, -BrokenTop, -NumCavities, -Notes, -BarkBeetle, -MistletoeRating) |>
@@ -137,7 +140,8 @@ cp_sapling <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                              sheet = "Export_TBL_CenterPlotSapling") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_CenterPlotSapling")) |>
-  left_join(new_vcs); glimpse(cp_sapling)
+  left_join(new_vcs)|>
+  filter(trt_year != 2017); glimpse(cp_sapling)
 
 saplings_wide <- cp_sapling |>
   group_by(new_visit_code, trt_year, phase_adj, PlotTreatmentStatus) |>
@@ -171,7 +175,8 @@ sp_seedling <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                                 sheet = "Export_TBL_SubPlotSeedling") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_SubPlotSeedling")) |> 
-  left_join(new_vcs); glimpse(sp_seedling)
+  left_join(new_vcs)|>
+  filter(trt_year != 2017); glimpse(sp_seedling)
 
 seedling_density <- sp_seedling |>
   mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated",
@@ -211,7 +216,8 @@ sp_groundfuel <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                                  sheet = "Export_TBL_SubPlotGroundFuel") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_SubPlotGroundFuel")) |>
-  left_join(new_vcs); glimpse(sp_groundfuel)
+  left_join(new_vcs)|>
+  filter(trt_year != 2017); glimpse(sp_groundfuel)
 
 # sp_groundfuel |>
 #   group_by(phase_adj, trt_year) |>
@@ -233,7 +239,8 @@ sp_woodyfuel <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                                    sheet = "Export_TBL_SubPlotWoodyFuel") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_SubPlotWoodyFuel")) |>
-  left_join(new_vcs); glimpse(sp_woodyfuel)
+  left_join(new_vcs)|>
+  filter(trt_year != 2017); glimpse(sp_woodyfuel)
 
 # sp_woodyfuel |>
 #   group_by(phase_adj, trt_year) |>
@@ -254,7 +261,8 @@ tree_canopy_cover <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                                   sheet = "Export_TBL_TreeCanopyCover") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_TreeCanopyCover")) |>
-  left_join(new_vcs); glimpse(tree_canopy_cover)
+  left_join(new_vcs)|>
+  filter(trt_year != 2017); glimpse(tree_canopy_cover)
 
 # tree_canopy_cover |>
 #   group_by(phase_adj, trt_year) |>
@@ -272,7 +280,8 @@ tree_group_transect <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                                        sheet = "Export_TBL_TreeGroupTransect") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_TreeGroupTransect")) |>
-  left_join(new_vcs); glimpse(tree_group_transect)
+  left_join(new_vcs)|>
+  filter(trt_year != 2017); glimpse(tree_group_transect)
 
 # tree_group_transect |>
 #   group_by(phase_adj, trt_year) |>
@@ -293,7 +302,8 @@ understory_heights <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                                          sheet = "Export_TBL_MS_UnderstoryHeights") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_MS_UnderstoryHeights")) |>
-  left_join(new_vcs); glimpse(understory_heights)
+  left_join(new_vcs)|>
+  filter(trt_year != 2017); glimpse(understory_heights)
 
 understory_heights |>
   group_by(phase_adj, trt_year) |>
@@ -318,7 +328,14 @@ pha <- readxl::read_xlsx("data/PHA_Export_20231024.xlsx",
 comm_raw <- bind_rows(esv, pha)|>
   filter(TreatmentUnit %in% plot_visits$TreatmentUnit) |>
   left_join(new_vcs) |>
-  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Control", PlotTreatmentStatus))
+  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", 
+                                      "Control", PlotTreatmentStatus))|>
+  filter(trt_year != 2017)
+
+comm_raw |>
+  group_by(phase_adj) |>
+  summarise(n=length(unique(PlotCode)))
+
 # glimpse(comm_raw)
 
 # comm_raw |>
@@ -359,6 +376,10 @@ cover_plot <- comm_raw %>%
   ungroup() |>
   unique()#;cover_plot
 
+cover_plot |>
+  tidyr::separate(new_visit_code, sep = "\\.", into = c('PlotCode', 'phase_adj')) |>
+  group_by(phase_adj) |>
+  summarise(n=length(unique(PlotCode)))
 
 comm <- cover_plot %>%
   filter(!CodeType %in% non_plant_codes) %>%
@@ -528,10 +549,10 @@ spp_list <- comm_raw |>
   ungroup() |> 
   arrange(desc(prevalence)) |>
   left_join(boulder) |> 
-  mutate_if(is.character, as.factor)
+  mutate_if(is.character, as.factor) 
 
 summary(spp_list)
-write_csv(spp_list,"data/species_list.csv")
+write_csv(spp_list,"data/species_list_10.csv")
 
 
 # creating a species list, with rare species grouped
@@ -540,7 +561,8 @@ sp_list <- readr::read_csv("data/species_list_alm_modified.csv") |>
   tidyr::separate(FinalName, into = c("genus", "species"), remove = F, sep = " ") |>
   dplyr::mutate(group = ifelse(prevalence > 10, FinalName, 
                                str_c(NativityL48,"_", Lifespan,"_", CodeType) |> str_remove_all("\\-"))) |>
-  dplyr::select(-notes)
+  dplyr::select(-notes) |>
+  unique()
 print(sp_list, n=300)
 
 tenyp <- plot_visits_10y |> pull(PlotCode) |> unique()
@@ -562,7 +584,7 @@ plotwise_invasion |>
   arrange(`post10-11`) |>
   print(n=99)
 
-plotwise_invasion  |>
+plotwise_invasion |>
   mutate_if(is.numeric, function(x) ifelse(x >0, 1,0)) %>%
   pivot_longer(cols = names(.)[c(3:6)]) |>
   group_by(name, trt) |>
@@ -575,9 +597,9 @@ plotwise_invasion  |>
 plotwise_invasion  %>%
   pivot_longer(cols = names(.)[c(3:6)]) |>
   group_by(name, trt) |>
-  summarise(fraction_invaded = mean(value, na.rm=T)) |>
+  summarise(cover_invaded = mean(value, na.rm=T)) |>
   ungroup() |>
-  ggplot(aes(x=name, y=fraction_invaded, group = trt, color = trt)) +
+  ggplot(aes(x=name, y=cover_invaded, group = trt, color = trt)) +
   geom_line() +
   ggthemes::theme_clean()
 

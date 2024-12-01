@@ -1,0 +1,9 @@
+phase,PlotTreatmentStatus,tc,rec,tr,rer
+01_Pre,Control,22.086,0.005,40.286,0.047
+01_Pre,Treatment,15.979,0.071,36.833,0.039
+post0-1,Control,27.847,0.032,43.25,0.046
+post0-1,Treatment,18.64,0.002,33.8,0.036
+post04-5,Control,31.897,0.024,36.818,0.052
+post04-5,Treatment,39.835,0.024,39.789,0.084
+post10-11,Control,22.074,0.023,40.765,0.045
+post10-11,Treatment,25.136,0.011,41.273,0.064
