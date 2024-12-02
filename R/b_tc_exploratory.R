@@ -119,7 +119,7 @@ p_o <- ggplot(nms_pa$site_scores, aes(x=NMDS1, y=NMDS2)) +
 ggsave(filename = "out/nms_occurrence.png", plot = p_o, width =10, height = 4, bg="white")
 ggsave(filename = "out/nms_abundance.png", plot = p_a, width =8, height = 4, bg="white")
 
-ggpubr::ggarrange(p_a, p_o, nrow=1, ncol =2, widths = c(1,1.4)) %>%
+ggpubr::ggarrange(p_a, p_o, nrow=1, ncol =2, widths = c(1,1)) %>%
   ggsave(filename = "out/nms_panelled.png", width=17, height=8, bg = "white")
 
 # diversity ======================================

@@ -1,0 +1,9 @@
+phase,treatment,total_richness,native_richness,exotic_richness
+0,Control,165 (7),151 (6),7 (0.9)
+01,Control,154 (9),144 (8),6 (1.1)
+05,Control,153 (6),145 (5),6 (0.6)
+10,Control,177 (8),162 (7),10 (1)
+0,Treated,149 (7),140 (6),5 (0.9)
+01,Treated,140 (6),130 (6),5 (0.8)
+05,Treated,181 (9),161 (8),14 (0.9)
+10,Treated,209 (12),187 (11),15 (1.1)
