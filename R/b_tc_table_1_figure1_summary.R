@@ -147,7 +147,7 @@ for(ph in unique(diffs$phase)){
       result[[cc]] <- diffs |>
         filter(PlotTreatmentStatus == ct, phase == ph) |>
         pull(rsp) |>
-        t.test() |>
+        wilcox.test() |>
         broom::tidy() |>
         mutate(phase = ph, PlotTreatmentStatus = ct, response = rsp)
       cc <- cc + 1
@@ -246,7 +246,7 @@ for(ph in unique(diffs_pfg$phase)){
       result[[cc]] <- diffs_pfg |>
         filter(PlotTreatmentStatus == ct, phase == ph, name == rsp) |>
         pull(dc) |>
-        t.test() |>
+        wilcox.test() |>
         broom::tidy() |>
         mutate(phase = ph, PlotTreatmentStatus = ct, name = rsp)
       cc <- cc + 1
@@ -331,7 +331,7 @@ for(ph in unique(diffs_gc$phase)){
       result[[cc]] <- diffs_gc |>
         filter(PlotTreatmentStatus == ct, phase == ph, name == rsp) |>
         pull(dc) |>
-        t.test() |>
+        wilcox.test() |>
         broom::tidy() |>
         mutate(phase = ph, PlotTreatmentStatus = ct, name = rsp)
       cc <- cc + 1

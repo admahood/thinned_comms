@@ -115,6 +115,9 @@ cp_tree <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
 #   group_by(phase_adj, trt_year) |>
 #   summarise(n_plots = length(unique(PlotCode)))
 # dim(cp_tree)
+
+
+
 # 
 # ggpubr::ggarrange(
 # cp_tree |>
