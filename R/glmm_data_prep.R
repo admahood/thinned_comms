@@ -1,5 +1,6 @@
 source("R/a_tc_data_prep.R")
 library(sf)
+
 # plot-level stand metrics ====
 cp_tree <- cp_tree |>
   dplyr::mutate(TreeStatus = ifelse(TreeStatus == "L", "live", "dead"))
@@ -65,6 +66,14 @@ spp <- cp |>
   left_join(species_list |> mutate(SpeciesCode = str_to_lower(SpeciesCode))) |>
   left_join(plot_visits)
 
+graminoid_cover <- spp |>
+  filter(CodeType == "Graminoid")|>
+  group_by(plot, phase, PlotTreatmentStatus, site, trt_u_adj, new_visit_code) |>
+  summarise(graminoid_cover = sum(cover)) |>
+  ungroup() |>
+  tidyr::replace_na(list('trt_u_adj' = "PHA-1-2"))
+  
+  
 native_cover <- spp |>
   filter(NativityL48 == "native") |>
   group_by(plot, phase, PlotTreatmentStatus, site, trt_u_adj, new_visit_code) |>
@@ -86,6 +95,10 @@ tt <- st_read("data/terrain_by_plot.gpkg") |>
   st_set_geometry(NULL) |> 
   left_join(clim)
 
+fwd <- fuel_cover_by_type |>
+  dplyr::filter(CodeType == 'FWD') |>
+  dplyr::select(fwd = cover, new_visit_code)
+
 plot_level_metrics <- cp_tree |>
   mutate(site = str_sub(PlotCode, 1,1)) |>
   group_by(PlotCode, PlotTreatmentStatus, phase_adj, new_visit_code, site, TreatmentUnit)|>
@@ -94,7 +107,9 @@ plot_level_metrics <- cp_tree |>
             quadratic_mean_diameter = sqrt(sum(DBH * DBH, na.rm=T)/n)) |>
   left_join(ba_m2ha) |>
   left_join(div_indices)|> 
+  left_join(fwd) |>
   left_join(tt) |>
+  left_join(graminoid_cover) |>
   left_join(saplings_wide) |> 
   left_join(seedling_density) |>
   replace_na(list(sapling_density_per_acre = 0,
@@ -111,157 +126,10 @@ plot_level_metrics <- cp_tree |>
          invaded = ifelse(exotic_cover > 0, 1, 0),
          exotic_relative_cover = 100 * (exotic_cover/(native_cover + exotic_cover)),
          exotic_relative_richness = 100 * (nspp_exotic/(nspp_native + nspp_exotic))
-         )
+         ) 
 
 summary(plot_level_metrics)
 glimpse(plot_level_metrics)
 write_csv(plot_level_metrics, "data/plot_level_data.csv")
 
-ggplot(plot_level_metrics, aes(x=phase_adj, y=exotic_relative_cover, fill = PlotTreatmentStatus)) +
-  geom_boxplot(outliers = F)
-
-ggplot(plot_level_metrics, aes(x=phase_adj, y=exotic_relative_richness, fill = PlotTreatmentStatus)) +
-  geom_boxplot(outliers = F)
-
-# catford 2012 metrics
-plot_level_metrics |>
-  dplyr::select(phase_adj, exotic_relative_cover, PlotTreatmentStatus, exotic_relative_richness) |>
-  pivot_longer(cols = c(exotic_relative_cover,exotic_relative_richness)) |>
-  ggplot(aes(x=phase_adj, y=value, fill = PlotTreatmentStatus)) +
-  geom_boxplot(outliers = F) +
-  facet_wrap(~name, scales = 'free_y', ncol=1) +
-  ggtitle("Invasion metrics recommended by Catford et al (2012)")
-ggsave('out/catford_invasion_metrics.png', bg='white')
-
-# model exploration (Kyle Rodman's code from Springer et al 2023)
-package.list <- c("here", "tidyverse", "glmmTMB", "DHARMa", "MuMIn", "ggplot2", 
-                  "cowplot", "spaMM", "performance", "ncf", "splines")
-new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-
-## And loading them
-for(i in package.list){library(i, character.only = T)}
-## Comparing with and without non-linear CWD term
-
-alt1 <- glmmTMB(nspp_native ~   tpa + phase_adj  + slope + twi + hli +
-                  exotic_cover  + ns(def_norm,2) + def_z_trt +
-                  (1|trt_u_adj/PlotCode), 
-                data = plot_level_metrics, family = poisson(),
-                na.action = "na.fail"); summary(alt1); performance::r2(alt1); diagnose(alt1); car::Anova(alt1)
-alt2 <-  glmmTMB(nspp_native ~   tpa + phase_adj + treated + slope + twi + hli +
-                   exotic_cover+  ns(def_norm,2) + def_z_trt +
-                   (1|trt_u_adj/PlotCode), 
-                 data = plot_level_metrics, family = poisson(),
-                 na.action = "na.fail"); summary(alt2); performance::r2(alt2); diagnose(alt2)
-AICc(alt1, alt2)
-dredge(alt1)
-simResid <- simulateResiduals(alt1)
-plot(simResid)
-simResid <- simulateResiduals(alt2)
-plot(simResid)
-
-
-library(ggeffects)
-
-ggpubr::ggarrange(
-  plot(ggeffects::ggpredict(alt1, terms = c("def_norm")),  show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("def_z_trt")),  show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("tpa")),  show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("twi")),  show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("slope")),  show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("hli")),  show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("exotic_cover")),  show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("phase_adj")),  show_title=F),
-ncol=4, nrow=2) |>
-  ggsave(filename = 'out/native_richness_glmm_partials.png', width=9, height=5, bg="white")
-
-plot(ggeffects::ggpredict(alt1, terms = c("tpa", "slope" )), show_residuals = TRUE, facets=TRUE, jitter = TRUE)
-plot(ggeffects::ggpredict(alt1, terms = c("tpa", "hli")), show_residuals = TRUE, facets=TRUE, jitter = TRUE)
-plot(ggeffects::ggpredict(alt1, terms = c("tpa", "phase_adj")), show_residuals = TRUE, facets=TRUE, jitter = TRUE)
-plot(ggeffects::ggpredict(alt1, terms = c("tpa", "phase_adj", "slope")), show_residuals = TRUE, facets=TRUE,show_ci=T)
-
-# native richness, bayesian 
-library(brms)
-brm1 <- brm(nspp_native ~   tpa + phase_adj + PlotTreatmentStatus + slope + twi + sapling_ba_ft_per_acre + hli + 
-              (1|trt_u_adj/PlotCode), data = plot_level_metrics, family = 'poisson'); summary(brm1);# performance::r2(brm1); diagnose(brm1)
-
-# probably cover of exotics is more important than species richness
-alt2 <- glmmTMB(nspp_exotic ~ quadratic_mean_diameter + phase_adj + site + tpa + fa + fa_x_slope+
-                  (1|TreatmentUnit/PlotCode), data = plot_level_metrics, family = poisson(),
-                na.action = "na.fail");summary(alt2); performance::r2(alt2); diagnose(alt2)
-dredge(alt2)
-simResid <- simulateResiduals(alt2)
-plot(simResid)
-
-# probably cover of exotics is more important than species richness
-
-ec1 <- glmmTMB(ec_binary ~ phase_adj + treated + tpa + site +  native_cover + ns(tmin_norm, 2) + def_z_trt +
-                  (1|trt_u_adj/PlotCode), data = plot_level_metrics, family = binomial(),
-                na.action = "na.fail");summary(ec1); performance::r2(ec1); diagnose(ec1); car::Anova(ec1)
-dredge(ec1) -> ddrd;ddrd
-
-ggpubr::ggarrange(
-  plot(ggeffects::ggpredict(alt1, terms = c("tmin_norm")), show_residuals = TRUE, jitter = .08, show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("tpa")), show_residuals = TRUE, jitter = .08, show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("twi")), show_residuals = TRUE, jitter = .01, show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("slope")), show_residuals = TRUE, jitter = .08, show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("hli")), show_residuals = TRUE, show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("log_saplingba")), show_residuals = TRUE, show_title=F),
-  plot(ggeffects::ggpredict(alt1, terms = c("PlotTreatmentStatus"))),
-  plot(ggeffects::ggpredict(alt1, terms = c("phase_adj"))),
-  ncol=2, nrow=4) |>
-  ggsave(filename = 'out/native_richness_glmm_partials.png', width=7, height=10, bg="white")
-
-simResid <- simulateResiduals(alt2)
-plot(simResid)
-
-inv1 <- glmmTMB(invaded ~ treated + phase_adj + site  + native_cover +
-                  shannon_native + 
-                  def_z_trt + ns(def_norm, 2) + 
-                 (1|trt_u_adj/PlotCode), data = plot_level_metrics, family = binomial(),
-               na.action = "na.fail");summary(inv1); performance::r2(inv1); diagnose(inv1); car::Anova(inv1)
-
-inv2 <- glmmTMB(invaded ~ 
-                  # tpa +
-                  ba_m2pherha +
-                  # treated +
-                  site +
-                  native_cover +
-                  shannon_native +
-                  ns(def_norm,2) +  
-                  def_z_trt +
-                  (1|trt_u_adj/PlotCode), data = plot_level_metrics, family = binomial(),
-                na.action = "na.fail");summary(inv2); performance::r2(inv2); diagnose(inv2); car::Anova(inv2); performance::check_collinearity(inv2)
-
-AIC(inv1, inv2)
-simResid <- simulateResiduals(inv1)
-plot(simResid)
-simResid <- simulateResiduals(inv2)
-plot(simResid)
-
-ggpubr::ggarrange(
-  plot(ggeffects::ggpredict(inv2, terms = c("def_norm")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("def_z_trt")), show_title=F),
-  # plot(ggeffects::ggpredict(inv2, terms = c("tpa")), show_title=F),
-  # plot(ggeffects::ggpredict(inv2, terms = c("slope")), show_title=F),
-  # plot(ggeffects::ggpredict(inv2, terms = c("twi")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("ba_m2pherha")), show_title=F),
-  # plot(ggeffects::ggpredict(inv2, terms = c("quadratic_mean_diameter")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("site")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("native_cover")), show_title=F),
-  plot(ggeffects::ggpredict(inv2, terms = c("shannon_native")), show_title=F),
-  ncol=3, nrow=2) |>
-  ggsave(filename = 'out/invaded_glmm_partials.png', width=7, height=5, bg="white")
-
-ggpubr::ggarrange(
-  plot(ggeffects::ggpredict(inv1, terms = c("def_z_trt")), show_title=F),
-  plot(ggeffects::ggpredict(inv1, terms = c("def_norm")), show_title=F),
-  plot(ggeffects::ggpredict(inv1, terms = c("treated")), show_title=F),
-  plot(ggeffects::ggpredict(inv1, terms = c("phase_adj")), show_title=F),
-  # plot(ggeffects::ggpredict(inv1, terms = c("site")), show_title=F),
-  # plot(ggeffects::ggpredict(inv1, terms = c("slope")), show_title=F),
-  plot(ggeffects::ggpredict(inv1, terms = c("native_cover")), show_title=F),
-  plot(ggeffects::ggpredict(inv1, terms = c("shannon_native")), show_title=F),
-  ncol=3, nrow=2) |>
-  ggsave(filename = 'out/invaded_cats_glmm_partials.png', width=7, height=5, bg="white")
 

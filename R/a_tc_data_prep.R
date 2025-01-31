@@ -20,6 +20,7 @@ lut_trt_unit <- c('PHA-1-2' = "PHA-1-2", 'PHA-1-610' = "PHA-1-2",
                   'PHA-2T1' = 'PHA-2-1', 'PHA-2T2' = 'PHA-2-2', 
                   'PHA-2T3' = 'PHA-2-3', 'ESV-13'= 'ESV-13', 
                   'ESV-28'='ESV-28', 'ESV-34' = 'ESV-34')
+
 # this is the main thing
 plot_visits <- readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                                            sheet = "Export_TBL_PlotVisit")|>
@@ -48,7 +49,16 @@ plot_visits <- plot_visits |>
                                yst %in% c(10,11) ~ "post10-11"
                                ))  |>
   replace_na(list(phase_adj = "not_measured")) |>
-  mutate(new_visit_code = str_c(PlotCode, ".", phase_adj)) 
+  mutate(new_visit_code = str_c(PlotCode, ".", phase_adj)) |>
+  filter(!PlotCode %in% c('P1-2-T-615-01', 'P1-2-T-615-02 '), 
+         trt_year < 2017)
+
+plot_visits |> 
+  filter(trt_year < 2017) |>
+  group_by(PlotCode) |>
+   summarise(n = length(unique(phase_adj)),
+     codes = paste(unique(phase_adj), collapse = '__')) |>
+  arrange(n) |> print(n=99)
 
 plot_visits |>
   group_by(trt_year) |>
@@ -81,21 +91,27 @@ khr_fuels <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
                               sheet = "Export_TBL_1KhrFuel")) |>
   left_join(new_vcs) |>
   dplyr::select(-ID, -DataFlag)|>
-  filter(trt_year != 2017); glimpse(khr_fuels)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode); glimpse(khr_fuels)
 # 
 # khr_fuels |>
 #   group_by(phase_adj, trt_year, PlotSize) |>
 #   summarise(n_plots = length(unique(PlotCode)))
 # 
+lut_khr_areas <- c(1, 2, 4, 1, 8.69, 10)
+names(lut_khr_areas) = c("Whole", "Half", "Quarter", "UNK", "10X50", "mini")
+
 # khr_fuels |>
 #   mutate(
-#     density_constant = ifelse(RottenSound == "Sound", 0.65, 0.45),
-#     mass = (Diameter1/2)*(Diameter2/2)*pi*Length*density_constant) |>
-#   group_by(new_visit_code, phase_adj, trt_year,PlotTreatmentStatus,TreatmentUnit) |>
-#   reframe(mass = sum(mass, na.rm=T)) |>
-#   ggplot(aes(x=TreatmentUnit |> str_sub(1,3), y=mass, fill=PlotTreatmentStatus)) +
+#     r1 = Diameter1/2, r2 = Diameter2/2,
+#     density_constant = ifelse(RottenSound == "Sound", 0.0125, 0.00935),
+#     area.multiplier = lut_khr_areas[PlotSize],
+#     volume_ft3 = (Length*12 * pi / 3 * (r1^2 + r1*r2 + r2^2)) * 0.000578704,
+#     loading_t_ac = volume_ft3 * density_constant * area.multiplier * 10) |> 
+#   group_by(new_visit_code, phase_adj, PlotTreatmentStatus, TreatmentUnit) |>
+#   reframe(loading_t_ac = sum(loading_t_ac, na.rm=T)) |>
+#   ggplot(aes(x=TreatmentUnit |> str_sub(1,3), y=loading_t_ac, fill=PlotTreatmentStatus)) +
 #   geom_boxplot() +
-#   ylab("Mass (r1 * r2 * pi * length * density)") +
+#   ylab("Fuel Load (Tons/Acre)") +
 #   xlab("Treatment Units (Phase = 10-11 years post-treatment)")
 # ggsave("out/khr_fuels.png", width=15, height=8)
 
@@ -106,11 +122,11 @@ cp_tree <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_CenterPlotTreeData")) |>
   left_join(new_vcs)|>
-  filter(trt_year != 2017)|>
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode)|>
   dplyr::select(-DataFlag, -TreeOrder, -PlotSize, -TagID, -DeadTop, -ForkedTrunk, 
                 -WitchesBroom, -MistletoeShoots, -FireScar, -LightningScar, -Conks, 
                 -HollowBole, -BrokenTop, -NumCavities, -Notes, -BarkBeetle, -MistletoeRating) |>
-  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Control", PlotTreatmentStatus))#; glimpse(cp_tree)
+  mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Treatment", PlotTreatmentStatus))#; glimpse(cp_tree)
 # cp_tree |>
 #   group_by(phase_adj, trt_year) |>
 #   summarise(n_plots = length(unique(PlotCode)))
@@ -144,7 +160,12 @@ cp_sapling <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_CenterPlotSapling")) |>
   left_join(new_vcs)|>
-  filter(trt_year != 2017); glimpse(cp_sapling)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode); glimpse(cp_sapling)
+
+cp_sapling |>
+  group_by(site = str_sub(VisitCode,1,1), phase_adj) |>
+  summarise(n_plots = length(unique(PlotCode)),
+            plots = unique(PlotCode) |> sort() |> paste(collapse = " "))
 
 saplings_wide <- cp_sapling |>
   group_by(new_visit_code, trt_year, phase_adj, PlotTreatmentStatus) |>
@@ -153,7 +174,7 @@ saplings_wide <- cp_sapling |>
   ungroup() |> 
   dplyr::select(new_visit_code, sapling_density_per_acre, sapling_ba_ft_per_acre)
 
-
+# 
 # cp_sapling |>
 #   group_by(phase_adj, trt_year) |>
 #   summarise(n_plots = length(unique(PlotCode)))
@@ -165,33 +186,61 @@ saplings_wide <- cp_sapling |>
 #   summarise(saplings_per_acre = sum(CalcCol_DensityContribution),
 #             basal_area_ft_acre = sum(CalcCol_BasalAreaContribution, na.rm=T)) |>
 #   ungroup() |>
-#   pivot_longer(cols = c(basal_area_ft_acre, saplings_per_acre)) |>
+#   pivot_longer(cols = c(saplings_per_acre, basal_area_ft_acre)) |>
 #   ggplot(aes(x=phase_adj, y=value, fill = PlotTreatmentStatus)) +
-#   geom_boxplot() +
+#   geom_boxplot(outliers =F) +
 #   scale_y_sqrt(breaks = c(1, 10, 50, 100, 500, 1000, 5000, 8000)) +
 #   facet_grid(name~trt_year, scales = "free_y") +
-#   ggtitle("Saplings")
+#   ggtitle("Saplings per Acre")
 # ggsave("out/centerPlotSaplings.png", width=10, height=6)
 
 # seedlings ====================================================================
+lut_seedling_fix_sp <- c("UNK" = "C_SRLCC")
+
+
 sp_seedling <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx", 
                                 sheet = "Export_TBL_SubPlotSeedling") |>
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_SubPlotSeedling")) |> 
   left_join(new_vcs)|>
-  filter(trt_year != 2017); glimpse(sp_seedling)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode); glimpse(sp_seedling)
 
-seedling_density <- sp_seedling |>
+sp_seedling |>
+  group_by(site = str_sub(VisitCode,1,1), phase_adj) |>
+  summarise(n_plots = length(unique(PlotCode)),
+            plots = unique(PlotCode) |> sort() |> paste(collapse = " "))
+
+sp_seedling |> group_by(new_visit_code) |> 
+  summarise(n=length(unique(MeterID)), paste(unique(MeterID) |> sort(), collapse = " ")) |> 
+  arrange(n) |>
+  print(n=999)
+
+sp_seedling |>
+  filter(PlotCode == "P2-3-C-02")
+
+sp_seedling |>
+  filter(PlotTreatmentStatus == "NotTreated")
+
+seedling_density <- sp_seedling |> 
   mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated",
-                                      "Control", PlotTreatmentStatus)) |>
-  group_by(new_visit_code, trt_year, phase_adj, PlotTreatmentStatus, PlotSize_ac, MeterID) |>
+                                      "Treatment", PlotTreatmentStatus),
+         PlotSize_ac = ifelse(MeterID == "UNK", 0.005, PlotSize_ac), # fixing unks that should be 0.005 since they're just using the previous year's data
+         PlotSize_m = ifelse(MeterID == "UNK", 20.23, PlotSize_m),
+         MeterID = ifelse(MeterID == "UNK", "C_SRLCC", MeterID), 
+         MeterID = ifelse(new_visit_code == 'P2-3-C-02.post0-1' & MeterID == "N_SRLCC", "C_SRLCC", MeterID)) |> # one plot doesn't have a center plot
+  filter(str_sub(MeterID,1,1) == "C") |>
+  group_by(new_visit_code, PlotTreatmentStatus, PlotSize_ac, MeterID) |>
   summarise(total_count = sum(TotalCount)) |>
   ungroup() |>
-  group_by(new_visit_code, trt_year, phase_adj, PlotTreatmentStatus, PlotSize_ac) |> # then mean by transect
+  group_by(new_visit_code, PlotTreatmentStatus, PlotSize_ac) |> # then mean by transect
   summarise(mean_count = mean(total_count)) |>
   ungroup() |>
-  mutate(seedlings_per_acre = mean_count/PlotSize_ac) |>
-  dplyr::select(new_visit_code, seedlings_per_acre)
+  mutate(seedlings_per_acre = mean_count/PlotSize_ac,
+         seedlings_per_ha = seedlings_per_acre / 0.404686) |>
+  dplyr::select(new_visit_code, seedlings_per_ha,PlotTreatmentStatus)
+
+# seedling_density|>
+#   filter(str_sub(new_visit_code,1,9) == "P2-3-C-02")
  
 # sp_seedling |>
 #   group_by(phase_adj, trt_year) |>
@@ -220,7 +269,7 @@ sp_groundfuel <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_SubPlotGroundFuel")) |>
   left_join(new_vcs)|>
-  filter(trt_year != 2017); glimpse(sp_groundfuel)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode); glimpse(sp_groundfuel)
 
 # sp_groundfuel |>
 #   group_by(phase_adj, trt_year) |>
@@ -243,7 +292,7 @@ sp_woodyfuel <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_SubPlotWoodyFuel")) |>
   left_join(new_vcs)|>
-  filter(trt_year != 2017); glimpse(sp_woodyfuel)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode); glimpse(sp_woodyfuel)
 
 # sp_woodyfuel |>
 #   group_by(phase_adj, trt_year) |>
@@ -265,17 +314,17 @@ tree_canopy_cover <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_TreeCanopyCover")) |>
   left_join(new_vcs)|>
-  filter(trt_year != 2017); glimpse(tree_canopy_cover)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode); glimpse(tree_canopy_cover)
 
 # tree_canopy_cover |>
 #   group_by(phase_adj, trt_year) |>
 #   summarise(n_plots = length(unique(PlotCode)))
 
-# tree_canopy_cover |>
-#   ggplot(aes(x=phase_adj, y=PercentCover, fill = PlotTreatmentStatus)) +
-#   geom_boxplot() +
-#   ggtitle("Tree Canopy Cover") +
-#   facet_wrap(~trt_year)
+tree_canopy_cover |>
+  ggplot(aes(x=str_sub(new_visit_code,1,1), y=PercentCover, fill = PlotTreatmentStatus)) +
+  geom_boxplot() +
+  ggtitle("Tree Canopy Cover") +
+  facet_wrap(~Species)
 # ggsave("out/tree_canopy_cover.png", width=10, height=6)
 
 # tree group transect ==================================================================
@@ -284,7 +333,26 @@ tree_group_transect <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_TreeGroupTransect")) |>
   left_join(new_vcs)|>
-  filter(trt_year != 2017); glimpse(tree_group_transect)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode) |>
+  dplyr::select(-Notes, -DataFlag, -SampleUnit, -ID); glimpse(tree_group_transect)
+
+max_gap <- tree_group_transect |>
+  mutate(size = EndFt - StartFt) |>
+  group_by(PlotCode, TreeGroupClass) |>
+  summarise(#avg_size_ft = mean(size),
+            largest_m = max(size) * 0.3048,
+            freq = n()) |>
+  ungroup() |>
+  pivot_wider(names_from = TreeGroupClass, values_from = c(largest_m, freq), values_fill = 0
+              ) |>
+  dplyr::select(PlotCode, max_gap_m = largest_m_0) |>
+  dplyr::mutate(gap_class = case_when(max_gap_m == 0 ~ '0_gaps',
+                                      max_gap_m > 0 & max_gap_m <= 10 ~ 'small',
+                                      max_gap_m > 10 ~ 'large'))
+
+# max_gap |>
+#   ggplot(aes(x=max_gap_m, fill = gap_class)) +
+#   geom_histogram()
 
 # tree_group_transect |>
 #   group_by(phase_adj, trt_year) |>
@@ -306,20 +374,20 @@ understory_heights <- readxl::read_xlsx("data/ESV_Export_20231012.xlsx",
   bind_rows(readxl::read_xlsx("data/PHA_Export_20231024.xlsx", 
                               sheet = "Export_TBL_MS_UnderstoryHeights")) |>
   left_join(new_vcs)|>
-  filter(trt_year != 2017); glimpse(understory_heights)
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode); glimpse(understory_heights)
 
 understory_heights |>
   group_by(phase_adj, trt_year) |>
   reframe(n_plots = length(unique(PlotCode)))
 
-# understory_heights |>
-#   group_by(new_visit_code, PlantType, phase_adj, trt_year,PlotTreatmentStatus) |>
-#   summarise(avg_height_in = sum(Height_inches)/4) |>
-#   ungroup() |>
-#   ggplot(aes(x=phase_adj, y=avg_height_in, fill = PlotTreatmentStatus)) +
-#   geom_boxplot() +
-#   ggtitle("Understory Heights") +
-#   facet_wrap(~trt_year)
+understory_heights |>
+  group_by(new_visit_code, PlantType, phase_adj, trt_year,PlotTreatmentStatus) |>
+  summarise(avg_height_in = sum(Height_inches)/4) |>
+  ungroup() |>
+  ggplot(aes(x=phase_adj, y=avg_height_in, fill = PlotTreatmentStatus)) +
+  geom_boxplot() +
+  ggtitle("Understory Heights") +
+  facet_wrap(~PlantType)
 # ggsave("out/understory_heights.png", width=10, height=6)
 
 # plant understory =============================================================
@@ -332,8 +400,8 @@ comm_raw <- bind_rows(esv, pha)|>
   filter(TreatmentUnit %in% plot_visits$TreatmentUnit) |>
   left_join(new_vcs) |>
   mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", 
-                                      "Control", PlotTreatmentStatus))|>
-  filter(trt_year != 2017)
+                                      "Treatment", PlotTreatmentStatus)) |>
+  filter(trt_year != 2017, PlotCode %in% plot_visits$PlotCode)
 
 comm_raw |>
   group_by(phase_adj) |>
@@ -350,7 +418,7 @@ non_plant_codes <- c("FWD", "Fuel in Air", "Substrate")
 meta<- comm_raw %>%
   dplyr::select(VisitCode, PlotTreatmentStatus, TreatmentUnit) %>%
   mutate(PlotTreatmentStatus=ifelse(PlotTreatmentStatus == "NotTreated",
-                                    "Control", PlotTreatmentStatus)) |>
+                                    "Treatment", PlotTreatmentStatus)) |>
   left_join(new_vcs) |>
   tidyr::separate(new_visit_code, into = c("PlotCode", "Phase"), sep = "\\.",remove = F)
 
@@ -398,6 +466,13 @@ comm <- cover_plot %>%
 # dim(comm)
 comm <- comm[,colSums(comm)>0];dim(comm) # 20 species have 0 occurrences
 
+
+cover_plot |>
+  dplyr::select(new_visit_code, PlotTreatmentStatus) |>
+  unique() |>
+  tidyr::separate(new_visit_code,sep = '\\.', into = c('plot', 'phase')) |>
+  group_by(phase, PlotTreatmentStatus) |>
+  summarise(n=n())
 
 plant_cover_by_type <-
   cover_plot %>%
@@ -617,5 +692,25 @@ ggplot(data.frame(x = c(-1,1,5,10), y = c(49/71, 50/71, 15/71, 4/43))) +
 # putting together ancillary data for glmm analysis: seedlings, saplings, cp_tree
 
 cp_tree
+
+# question: are treated plots having the same species spreading to the controls'
+
+species_plot_invasion <- cover_plot |>
+  left_join(sp_list |> mutate(SpeciesCode = str_to_lower(SpeciesCode))) |>
+  filter(!is.na(prevalence),
+         NativityL48 == "exotic") |>
+  left_join(plot_visits) 
+
+exotics_only <- species_plot_invasion |>
+  dplyr::select(new_visit_code, cover, SpeciesCode) |>
+  pivot_wider(names_from = SpeciesCode, values_from = cover, values_fill = 0) |>
+  tibble::column_to_rownames("new_visit_code")
+
+species_plot_invasion |>
+  group_by(trt_u_adj, phase_adj, PlotTreatmentStatus) |>
+  summarise(spp = paste(unique(SpeciesCode), collapse = " ")) |>
+  ungroup() |>
+  print(n=33)
+
 
 

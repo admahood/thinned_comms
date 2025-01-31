@@ -1,0 +1,117 @@
+/////////////////////////////////////////////////////////////////////////
+// Script to obtain monthly minimum temperature, maximum temperature, and
+// total precipitation in Pinyon-Juniper woodlands north of the San Francisco
+// Peaks, AZ
+
+/////////////////////////////////////////////////////////////////////////
+
+// ---------- Setting start and end dates for summaries  --------
+var startDate = ee.Date('1989-10-01'); // Start of 1990 water year
+var endDate = ee.Date('2023-09-30'); // End of 2023 water year
+var nMonths = ee.Number(endDate.difference(startDate,'month')).round().subtract(1); // calculate the number of months to process. nMonths - 1 is used in mapped functions below
+
+// ---------- Bringing in original image collection from Daymet  --------
+var daymet = ee.ImageCollection("NASA/ORNL/DAYMET_V4")
+              .filterDate(startDate, endDate);
+
+/////////////////////////////////////////////////////////////////////////
+// Getting monthly average maximum temperature from 1989-2023
+
+// Gettting relevant variable
+var tmax = daymet.select('tmax');
+
+// Iterating over each month and calculating the mean
+var byMonth = ee.ImageCollection(
+  // map over each month
+  ee.List.sequence(0,nMonths).map(function (n) {
+    // calculate the offset from startDate
+    var ini = startDate.advance(n,'month');
+    // advance just one month
+    var end = ini.advance(1,'month');
+    // filter and reduce
+    return tmax.filterDate(ini,end)
+               .mean()
+               .set('system:time_start', ini);
+}));
+
+
+// Export the image, specifying scale and region.
+Export.image.toDrive({
+  image: byMonth.toBands(),
+  description: 'daymet_tmax',
+  folder: 'GEE_Outputs',
+  fileFormat: 'GeoTIFF',
+  region: bounds.geometry(),
+  scale: 1000,
+  crs: "EPSG:26912", // Using NAD83 - UTM12N
+  maxPixels: 1e13,
+  skipEmptyTiles: true
+});
+
+/////////////////////////////////////////////////////////////////////////
+// Getting monthly average minimum temperature from 1989-2023
+
+// Gettting relevant variable
+var tmin = daymet.select('tmin');
+
+// Iterating over each month and calculating the mean
+var byMonth = ee.ImageCollection(
+  // map over each month
+  ee.List.sequence(0,nMonths).map(function (n) {
+    // calculate the offset from startDate
+    var ini = startDate.advance(n,'month');
+    // advance just one month
+    var end = ini.advance(1,'month');
+    // filter and reduce
+    return tmin.filterDate(ini,end)
+               .mean()
+               .set('system:time_start', ini);
+}));
+
+
+// Export the image, specifying scale and region.
+Export.image.toDrive({
+  image: byMonth.toBands(),
+  description: 'daymet_tmin',
+  folder: 'GEE_Outputs',
+  fileFormat: 'GeoTIFF',
+  region: bounds.geometry(),
+  scale: 1000,
+  crs: "EPSG:26912", // Using NAD83 - UTM12N
+  maxPixels: 1e13,
+  skipEmptyTiles: true
+});
+
+/////////////////////////////////////////////////////////////////////////
+// Getting monthly total precipitation from 1989-2023
+
+// Gettting relevant variable
+var prcp = daymet.select('prcp');
+
+// Iterating over each month and calculating the mean
+var byMonth = ee.ImageCollection(
+  // map over each month
+  ee.List.sequence(0,nMonths).map(function (n) {
+    // calculate the offset from startDate
+    var ini = startDate.advance(n,'month');
+    // advance just one month
+    var end = ini.advance(1,'month');
+    // filter and reduce
+    return prcp.filterDate(ini,end)
+               .sum()
+               .set('system:time_start', ini);
+}));
+
+
+// Export the image, specifying scale and region.
+Export.image.toDrive({
+  image: byMonth.toBands(),
+  description: 'daymet_prcp',
+  folder: 'GEE_Outputs',
+  fileFormat: 'GeoTIFF',
+  region: bounds.geometry(),
+  scale: 1000,
+  crs: "EPSG:26912", // Using NAD83 - UTM12N
+  maxPixels: 1e13,
+  skipEmptyTiles: true
+});

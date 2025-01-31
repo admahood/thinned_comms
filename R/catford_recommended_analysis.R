@@ -48,55 +48,13 @@ err2 <- glmmTMB(exotic_relative_richness ~ treated * phase_adj  +
                 data = plot_level_metrics, family = tweedie(),
                 na.action = "na.fail"); summary(err2); performance::r2(err2); diagnose(err2); car::Anova(err2)
 p2 <- plot(ggpredict(err2, terms = c('phase_adj', 'treated', 'site'))) +
-  ggtitle("Exotic Relative Richness: Marginal R2 = 0.486")
+  ggtitle("Exotic Relative Richness: Marginal R2 = 0.486");p2
 # plot(ggpredict(err2))
 AIC(err1, err2)
 
 ggarrange(p1, p2, nrow=2) 
 ggsave(filename = "out/err_models.png", height = 8, width = 8, bg='white')
 
-# exotic relatie richness SEM ==================================================
-plots_with_10y <- plot_level_metrics |>
-  dplyr::filter(phase_adj == 'post10-11') |>
-  dplyr::pull(PlotCode) |>
-  as.character() |>
-  unique()
-pd <- plot_level_metrics |>
-  mutate_if(is.character, as.factor) |>
-  mutate(tst = case_when(phase_adj == '01_Pre' ~ -1, 
-                               phase_adj == 'post0-1' ~ 1,
-                               phase_adj == 'post04-5' ~ 5,
-                               phase_adj == 'post10-11' ~ 10))
-  filter(PlotCode %in% plots_with_10y)
-
-library(lmerTest)
-library(ggsem)
-tpa_mod <- glmmTMB(tpa ~ phase_adj + treated + site + (1|trt_u_adj/PlotCode), 
-                   family = tweedie(),
-                   data = pd); summary(tpa_mod); car::Anova(tpa_mod)
-tpa_mod1 <- glmmTMB(tpa ~ tst * treated + site + (1|trt_u_adj/PlotCode), 
-                   family = tweedie(),
-                   data = pd); summary(tpa_mod1); car::Anova(tpa_mod1)
-AIC(tpa_mod, tpa_mod1)
-plot(ggpredict(tpa_mod, terms = c('phase_adj', 'treated','site')))
-
-nc_mod <- glmmTMB(I(native_cover/100) ~  site +tst * aet_norm +  (1|trt_u_adj/PlotCode), 
-                  family = beta_family(),
-                  data = pd);summary(nc_mod);car::Anova(nc_mod)
-plot(ggpredict(nc_mod, terms = c('tst', 'aet_norm','site')))
-
-err_mod <- glmmTMB(exotic_relative_richness ~ ns(tst,2) + treated + native_cover +
-                     #ns(aet_norm,2)  + 
-                     site + (1|trt_u_adj/PlotCode), 
-                   family = tweedie(),
-                   data = pd);summary(err_mod); car::Anova(err_mod); performance::check_model(err_mod); performance::r2(err_mod)
-plot(ggpredict(err_mod))
-plot(ggpredict(err_mod, terms = c('phase_adj', 'native_cover','site')))
-
-err_sem <- piecewiseSEM::psem(nc_mod, err_mod, tpa_mod1)
-# save(tpa_mod, nc_mod, err_mod, err_sem, file = "out/psem.rda")
-summary(err_sem)
-ggsem(err_sem)
 
 # br1 <- brm(exotic_relative_richness ~ tpa + phase_adj  + 
 #               def_z_trt + native_cover +
@@ -124,8 +82,7 @@ p3 <- plot(ggpredict(erc1, terms = c('phase_adj', 'treated', "site")))
 
 erc2 <- glmmTMB(exotic_relative_cover ~ phase_adj * quadratic_mean_diameter+ site +
                   (1|trt_u_adj/PlotCode), 
-                data = plot_level_metrics |> mutate_if(is.character, as.factor), family = tweedie(),
-                na.action = "na.fail"); summary(erc2); performance::r2(erc2); diagnose(erc2); car::Anova(erc2)
+                data = plot_level_metrics |> mutate_if(is.character, as.factor), family = tweedie()); summary(erc2); performance::r2(erc2); diagnose(erc2); car::Anova(erc2)
 # plot(ggpredict(erc2))
 p4 <- plot(ggpredict(erc2, terms = c('quadratic_mean_diameter', 'phase_adj', 'site'))) + scale_y_sqrt()
 

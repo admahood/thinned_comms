@@ -1,0 +1,15 @@
+name,term,statistic,p.value
+Khr Fuels (t/ac),Treatment,7.3,0.0098
+Khr Fuels (t/ac),Site,0.15,0.7
+saplings_per_acre,Treatment,5.6,0.022
+saplings_per_acre,Site,4.6,0.039
+seedlings_per_acre,Treatment,1.5,0.22
+seedlings_per_acre,Site,37,5.7e-9
+litter/duff fuel load (t/ac),Treatment,2.8,0.097
+litter/duff fuel load (t/ac),Site,0.34,0.56
+1/10/100 hour fuels (t/ac),Treatment,6.3,0.016
+1/10/100 hour fuels (t/ac),Site,11,0.0023
+tree_canopy_cover,Treatment,12,0.0013
+tree_canopy_cover,Site,3.7,0.063
+shrub_height_in,Treatment,0.15,0.7
+shrub_height_in,Site,9,0.0045

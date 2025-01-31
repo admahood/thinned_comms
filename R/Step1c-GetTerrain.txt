@@ -1,0 +1,65 @@
+/////////////////////////////////////////////////////////////////////////
+// This script obtains elevation, slope, aspect, and latitude from 10-m 
+  // DEMs from the USGS National Elevation Dataset, for use in water balance
+  // models in Pinyon-Juniper woodlands north of the San Francisco Peaks, AZ
+// Author: Kyle C. Rodman, Ecological Restoration Institute - NAU, 10/14/2024
+
+/////////////////////////////////////////////////////////////////////////
+// Import data and define study bounds
+var dem = ee.Image("USGS/3DEP/10m")
+
+/////////////////////////////////////////////////////////////////////////
+// Exporting different datasets
+
+// Elevation
+Export.image.toDrive({
+  image: dem.toUint16(),
+  description: 'elev_m',
+  fileFormat: 'GeoTIFF',
+  folder: 'GEE_Outputs',
+  scale: 10,
+  region: bounds.geometry().buffer(1000),
+  maxPixels: 1e13,
+  skipEmptyTiles: true,
+  crs: "EPSG:26912"
+});
+
+// Slope
+Export.image.toDrive({
+  image: ee.Terrain.slope(dem).toUint8(),
+  description: 'slope_deg',
+  fileFormat: 'GeoTIFF',
+  folder: 'GEE_Outputs',
+  scale: 10,
+  region: bounds.geometry().buffer(1000),
+  maxPixels: 1e13,
+  skipEmptyTiles: true,
+  crs: "EPSG:26912"
+});
+
+// Aspect
+Export.image.toDrive({
+  image: ee.Terrain.aspect(dem).toUint16(),
+  description: 'aspect_deg',
+  fileFormat: 'GeoTIFF',
+  folder: 'GEE_Outputs',
+  scale: 10,
+  region: bounds.geometry().buffer(1000),
+  maxPixels: 1e13,
+  skipEmptyTiles: true,
+  crs: "EPSG:26912"
+});
+
+// Latitude
+Export.image.toDrive({
+  image:  ee.Image.pixelLonLat().select('latitude'),
+  description: 'latitude_deg',
+  fileFormat: 'GeoTIFF',
+  folder: 'GEE_Outputs',
+  scale: 10,
+  region: bounds.geometry().buffer(1000),
+  maxPixels: 1e13,
+  skipEmptyTiles: true,
+  crs: "EPSG:26912"
+});
+
