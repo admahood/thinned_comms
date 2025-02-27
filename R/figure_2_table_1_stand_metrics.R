@@ -5,10 +5,7 @@ source("R/a_tc_data_prep.R")
 seeds <- seedling_density |>
   tidyr::separate(new_visit_code, sep = "\\.", remove = T, into = c('plot', "phase")) |>
   dplyr::rename(value = seedlings_per_ha) 
-# seeds |>
-#   ggplot() +
-#   geom_boxplot(aes(x=phase, y=spa, fill = PlotTreatmentStatus)) +
-#   scale_y_sqrt()
+
 
 ptsd <- seeds |>
   filter(phase == '01_Pre') |>
@@ -76,6 +73,52 @@ means <- left_join(density, ba_m2ha) |>
   left_join(fwd) |>
   pivot_longer(cols = c(tpa, qmd, ba_m2perha, fwd))
 
+# table 1: emmeans =============================================================
+
+allmeans <- means |>
+  bind_rows(
+    seeds |>
+      dplyr::rename(PlotCode = plot, phase_adj = phase) |> 
+      dplyr::mutate(name = "seeds",
+                    site = str_sub(PlotCode,1,1),
+                    new_visit_code = str_c(PlotCode, ".", phase_adj))
+  )
+
+ems <- list()
+emstat <- list()
+cc <- 1
+for(i in unique(allmeans$name)) {
+  fit <- lmerTest::lmer(value ~ phase_adj*PlotTreatmentStatus + (1|site/PlotCode), 
+                 data = allmeans |> filter(name == i))
+  emm <- emmeans(fit, ~ PlotTreatmentStatus | phase_adj) 
+  ems[[cc]] <- emm |> 
+    broom.mixed::tidy() |>
+    mutate(response = i)
+  emstat[[cc]] <- pairs(emm) |> broom::tidy() |> mutate(response = i)
+  cc<- cc + 1
+}
+
+em_star <-
+  bind_rows(emstat) |>
+  dplyr::mutate(star = case_when(p.value >= 0.1 ~ "",
+                                 p.value < 0.1 & p.value >= 0.05 ~ '.',
+                                 p.value < 0.05 & p.value >= 0.01 ~ '*',
+                                 p.value < 0.01 & p.value >= 0.001 ~ '**',
+                                 p.value < 0.001 ~ "***")) |>
+  dplyr::select(response, phase_adj, star) 
+
+bind_rows(ems) |>
+  left_join(em_star) |>
+  dplyr::mutate(value = str_c(signif(estimate,3), " (", signif(std.error,3), ") ", star) |> trimws()) |>
+  dplyr::select(-statistic, -df, -p.value, -estimate, -std.error, -star) |>
+  tidyr::pivot_wider(names_from = phase_adj, values_from = value) |>
+  janitor::clean_names() |>
+  dplyr::select(response, trt = 1, 3, 4,5,6) |>
+  write_csv('out/table1_stand_emms.csv')
+
+
+
+# calculating difference from pretreatment for figure ==========================
 ptv <- means |>
   dplyr::filter(phase_adj == '01_Pre') |>
   dplyr::select(PlotCode, name, ptv = value)
@@ -154,3 +197,5 @@ ggplot(aes(x=phase, y=dv, fill = PlotTreatmentStatus)) +
 ggsave('out/figure_1_stand_metric_changes.png', width = 9, height =6, bg = 'white')
 
 diffss |> group_by(name, PlotTreatmentStatus) |> summarise(meanv = mean(dv))
+
+

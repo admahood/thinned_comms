@@ -1,0 +1,24 @@
+response,term_trt,trtstat,term_ss,ssstat
+Exotic Relative Richness,phase,56.82***,Tree Density,7.62**
+,Treatment,3.97*,CWD(z) Treatment Year,22.67***
+,phase x Treatment,10.84*,CWD(z) Sample Year,17.89***
+,,,Total Cover,14.95***
+Graminoid Cover,phase,225.08***,CWD normal,6.09*
+,Treatment,1.99,CWD(z) Sample Year,10.89***
+,phase x Treatment,32.79***,Heat Load,5.49*
+,,,Tree Density,13.85***
+,,,Basal Area,4.44*
+Native Cover,phase,210.98***,CWD(z) Sample Year,25.21***
+,Treatment,0,Fine Woody Debris Cover,3.03.
+,phase x Treatment,37.1***,Quadratic Mean Diameter,5.09*
+,,,slope,4.25*
+,,,Topographic Wetness,4.01*
+Native Richness,phase,32.89***,CWD normal,26.87***
+,Treatment,0.3,CWD(z) Sample Year,9.09**
+,phase x Treatment,3.5,Heat Load,27.98***
+,,,Tree Density,17.28***
+,,,Total Cover,13.76***
+P(Invasion),phase,34.5***,CWD(z) Sample Year,26.73***
+,Treatment,2.2,CWD normal,12.47**
+,phase x Treatment,4.24,CWD(z) Treatment Year,24.21***
+,,,Total Cover,8.21**

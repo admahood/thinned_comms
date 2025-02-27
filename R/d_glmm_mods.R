@@ -1,13 +1,16 @@
 # brms models
 library(tidyverse)
-library(brms)
-library(spaMM)
+# library(brms)
+# library(spaMM)
 library(glmmTMB)
-library(ncf)
+# library(ncf)
 library(randomForest)
 library(splines)
 library(ggeffects)
 library(ggpubr)
+library(car)
+library(broom.mixed)
+library(broom)
 library(cowplot)
 
 plot_level_metrics <- read_csv("data/plot_level_data.csv")  |>
@@ -20,17 +23,17 @@ plot_level_metrics <- read_csv("data/plot_level_data.csv")  |>
   mutate(total_cover = native_cover + exotic_cover) |>
   tidyr::replace_na(list(seedlings_per_ha = 0))
   
-glimpse(plot_level_metrics);summary(plot_level_metrics)
+# glimpse(plot_level_metrics);summary(plot_level_metrics)
 
 # exotic relative richness =====================================================
-rf_err <- randomForest(err ~ ., data= plot_level_metrics |> 
-                         dplyr::select(-contains('exotic'), -plot, -erc, -phase,-phase_adj,
-                                       -invaded, -TreatmentUnit, -aspect, -year,
-                                       -contains('native'), -new_visit_code, -cwd,
-                                       -PlotCode)) 
-varImpPlot(rf_err)
+# rf_err <- randomForest(err ~ ., data= plot_level_metrics |> 
+#                          dplyr::select(-contains('exotic'), -plot, -erc, -phase,-phase_adj,
+#                                        -invaded, -TreatmentUnit, -aspect, -year,
+#                                        -contains('native'), -new_visit_code, -cwd,
+#                                        -PlotCode)) 
+# varImpPlot(rf_err)
 
-mod_err <- glmmTMB(I(err+.0001) ~ 
+mod_err <- glmmTMB(I(err+ + 0.000001) ~ 
                      tpa +
                      def_z_trt +
                      # ns(def_norm, 2) +
@@ -42,22 +45,22 @@ mod_err <- glmmTMB(I(err+.0001) ~
                      # hli +
                      total_cover +
                      (1|plot), 
-            data = plot_level_metrics, map = list(theta = factor(NA)), 
+            data = plot_level_metrics,# map = list(theta = factor(NA)), 
              # start = list(theta = log(10)),
             family = beta_family(), REML =T, na.action = na.fail
               )
 # MuMIn::dredge(mod_err)
-summary(mod_err); performance::r2(mod_err); performance::check_collinearity(mod_err); car::Anova(mod_err)
+# summary(mod_err); performance::r2(mod_err); performance::check_collinearity(mod_err); car::Anova(mod_err)
 
 
 # graminoid cover ========================================================
-rf_gra <- randomForest(graminoid_cover ~ .,ntree=1000, 
-                       data= plot_level_metrics |> 
-                         dplyr::select(-contains('exotic'), -plot,  -phase,-phase_adj, -err, -total_cover,
-                                       -invaded, -TreatmentUnit, -aspect, -year, -treated,
-                                       -contains('native'), -new_visit_code, -cwd,
-                                       -PlotCode)) 
-varImpPlot(rf_gra)
+# rf_gra <- randomForest(graminoid_cover ~ .,ntree=1000, 
+#                        data= plot_level_metrics |> 
+#                          dplyr::select(-contains('exotic'), -plot,  -phase,-phase_adj, -err, -total_cover,
+#                                        -invaded, -TreatmentUnit, -aspect, -year, -treated,
+#                                        -contains('native'), -new_visit_code, -cwd,
+#                                        -PlotCode)) 
+# varImpPlot(rf_gra)
 
 mod_erc <- glmmTMB(I(graminoid_cover/100) ~ 
                      # erc +
@@ -72,15 +75,15 @@ mod_erc <- glmmTMB(I(graminoid_cover/100) ~
                      tpa +
                      # seedlings_per_ha +
                      ba_m2perha +
-                     (1|plot), REML = F, #map = list(theta = factor(NA)), 
+                     (1|plot), REML = T, #map = list(theta = factor(NA)), 
                    # start = list(theta = log(10)), #cores = 4, file = 'data/erc_mod',
             data = plot_level_metrics, 
             na.action = na.fail,
             family = beta_family(), 
 )
 # MuMIn::dredge(mod_erc)
-summary(mod_erc); performance::r2(mod_erc); performance::check_model(mod_erc); car::Anova(mod_erc); AIC(mod_erc)
-plot(ggeffects::ggpredict(mod_erc))
+# summary(mod_erc); performance::r2(mod_erc); performance::check_model(mod_erc); car::Anova(mod_erc); AIC(mod_erc)
+# plot(ggeffects::ggpredict(mod_erc))
 # 
 # t0 <- Sys.time()
 # bmod_erc <- brm(erc ~ 
@@ -105,13 +108,13 @@ plot(ggeffects::ggpredict(mod_erc))
 # summary(bmod_erc)
 # conditional_effects(bmod_erc)
 # native richness ========================================================
-rf_nr <- randomForest(nspp_native ~ .,ntree=1000, 
-                       data= plot_level_metrics |> 
-                         dplyr::select(-contains('exotic'), -plot,  -phase,-phase_adj, -err, -erc, -total_cover,
-                                       -invaded, -TreatmentUnit, -aspect, -year, -treated, -n,
-                                       -new_visit_code, -cwd, -shannon_native, -native_cover,
-                                       -PlotCode)) 
-varImpPlot(rf_nr)
+# rf_nr <- randomForest(nspp_native ~ .,ntree=1000, 
+#                        data= plot_level_metrics |> 
+#                          dplyr::select(-contains('exotic'), -plot,  -phase,-phase_adj, -err, -erc, -total_cover,
+#                                        -invaded, -TreatmentUnit, -aspect, -year, -treated, -n,
+#                                        -new_visit_code, -cwd, -shannon_native, -native_cover,
+#                                        -PlotCode)) 
+# varImpPlot(rf_nr)
 mod_nr <- glmmTMB(nspp_native ~ 
                   ns(def_norm,2) +
                   cwd_z +
@@ -122,23 +125,23 @@ mod_nr <- glmmTMB(nspp_native ~
                   # seedlings_per_ha +
                   # quadratic_mean_diameter 
                   (1|plot), #cores = 4, file = 'data/erc_mod',
-                data = plot_level_metrics, REML=F,
+                data = plot_level_metrics, REML=T,
                 family = 'poisson', na.action = na.fail
 )
 # MuMIn::dredge(mod_nr)
 
-summary(mod_nr); performance::r2(mod_nr); car::Anova(mod_nr)
-plot(ggeffects::ggpredict(mod_nr))
+# summary(mod_nr); performance::r2(mod_nr); car::Anova(mod_nr)
+# plot(ggeffects::ggpredict(mod_nr))
 
 
 # native cover ========================================================
-rf_nc <- randomForest(native_cover ~ .,ntree=1000, 
-                      data= plot_level_metrics |> 
-                        dplyr::select(-contains('exotic'), -plot,  -phase,-phase_adj, -err, -erc, -total_cover,
-                                      -invaded, -TreatmentUnit, -aspect, -year, -treated, -n, -nspp_native,
-                                      -new_visit_code, -cwd, -shannon_native, -total_cover,
-                                      -PlotCode)) 
-varImpPlot(rf_nc)
+# rf_nc <- randomForest(native_cover ~ .,ntree=1000, 
+#                       data= plot_level_metrics |> 
+#                         dplyr::select(-contains('exotic'), -plot,  -phase,-phase_adj, -err, -erc, -total_cover,
+#                                       -invaded, -TreatmentUnit, -aspect, -year, -treated, -n, -nspp_native,
+#                                       -new_visit_code, -cwd, -shannon_native, -total_cover,
+#                                       -PlotCode)) 
+# varImpPlot(rf_nc)
 
 mod_nc <- glmmTMB(I(native_cover/100) ~ 
                     cwd_z +
@@ -151,17 +154,17 @@ mod_nc <- glmmTMB(I(native_cover/100) ~
                   family = beta_family()
 )
 # MuMIn::dredge(mod_nc)
-summary(mod_nc); performance::r2(mod_nc); car::Anova(mod_nc); performance::check_collinearity(mod_nc); AIC(mod_nc)
-plot(ggeffects::ggpredict(mod_nc))
+# summary(mod_nc); performance::r2(mod_nc); car::Anova(mod_nc); performance::check_collinearity(mod_nc); AIC(mod_nc)
+# plot(ggeffects::ggpredict(mod_nc))
 
 # invasion =================
-rf_pi <- randomForest(invaded ~ ., data= plot_level_metrics |> 
-                         dplyr::select(-contains('exotic'), -plot, -erc, -err, -phase,-phase_adj,
-                                       -TreatmentUnit, -aspect, -year, -treated,
-                                       -contains('native'), -new_visit_code, -cwd,
-                                       -PlotCode)|>
-                        mutate(invaded = as.factor(invaded))) 
-varImpPlot(rf_pi)
+# rf_pi <- randomForest(invaded ~ ., data= plot_level_metrics |> 
+#                          dplyr::select(-contains('exotic'), -plot, -erc, -err, -phase,-phase_adj,
+#                                        -TreatmentUnit, -aspect, -year, -treated,
+#                                        -contains('native'), -new_visit_code, -cwd,
+#                                        -PlotCode)|>
+#                         mutate(invaded = as.factor(invaded))) 
+# varImpPlot(rf_pi)
 
 mod_pi <- glmmTMB(invaded ~ 
                     cwd_z +
@@ -175,72 +178,77 @@ mod_pi <- glmmTMB(invaded ~
 )
 # MuMIn::dredge(mod_pi)
 # AIC(mod_pi, mod_pi1)
-summary(mod_pi); performance::r2(mod_pi); car::Anova(mod_pi); performance::check_collinearity(mod_pi)
-plot(ggeffects::ggpredict(mod_pi, show_residuals = T))
+# summary(mod_pi); performance::r2(mod_pi); car::Anova(mod_pi); performance::check_collinearity(mod_pi)
+# plot(ggeffects::ggpredict(mod_pi, show_residuals = T))
 
 
-ggsave('out/invasion_partials.png', width =7, height =6, bg = 'white')
-
-bind_rows(mod_pi |> broom.mixed::tidy() |> mutate(response = "P(Invasion)"),
-          mod_err |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Exotic Relative Richness"),
-          mod_erc |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Exotic Relative Cover"),
-          mod_nr |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Native Richness"),
-          mod_nc |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Native Cover")) |> 
-  dplyr::filter(effect != "ran_pars",
-                !str_sub(term,1,5) %in% c("(Inte", "trt_u", 'phase', 'siteP', 'ns(de', 'hli')) |>
-  dplyr::select(-component, -group, -effect) |>
-  # dplyr::mutate(term = case_when(term == "ba_m2perha" ~ "Basal Area",
-  #                                term == "total_cover" ~ 'Total Cover',
-  #                                term == 'quadratic_mean_diameter' ~ 'QMD',
-  #                                term == 'cwd_z' ~ "CWD Z-Score",
-  #                                term == 'tpa:ba_m2perha' ~ 'tpa:ba_m2perha',
-  #                                term == "tpa" ~ 'Tree Density')) |>
-  # dplyr::mutate(sig = ifelse(p.value < 0.05, "*", "")) |> 
-  ggplot(#aes(color = sig)
-         ) +
-  geom_point(aes(x=estimate, y=term)) +
-  geom_segment(aes(x = estimate-std.error, xend = estimate+std.error,
-                   y = term)) +
-  geom_vline(xintercept = 0, lty = 2, lwd=.5) +
-  facet_wrap(~response, scales = 'free', ncol = 1) +
-  xlab("Estimate") +
-  ylab("Response Variable") +
-  theme_bw() 
-ggsave('out/figure_4_glmm_caterpillar.png', width = 3.5, height = 6, bg = 'white')
+# bind_rows(mod_pi |> broom.mixed::tidy() |> mutate(response = "P(Invasion)"),
+#           mod_err |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Exotic Relative Richness"),
+#           mod_erc |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Graminoid Cover"),
+#           mod_nr |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Native Richness"),
+#           mod_nc |> broom.mixed::tidy(exponentiate = F) |> mutate(response = "Native Cover")) |> 
+#   dplyr::filter(effect != "ran_pars",
+#                 !str_sub(term,1,5) %in% c("(Inte", "trt_u", 'phase', 'siteP', 'ns(de', 'hli')) |>
+#   dplyr::select(-component, -group, -effect) |>
+#   # dplyr::mutate(term = case_when(term == "ba_m2perha" ~ "Basal Area",
+#   #                                term == "total_cover" ~ 'Total Cover',
+#   #                                term == 'quadratic_mean_diameter' ~ 'QMD',
+#   #                                term == 'cwd_z' ~ "CWD Z-Score",
+#   #                                term == 'tpa:ba_m2perha' ~ 'tpa:ba_m2perha',
+#   #                                term == "tpa" ~ 'Tree Density')) |>
+#   # dplyr::mutate(sig = ifelse(p.value < 0.05, "*", "")) |> 
+#   ggplot(#aes(color = sig)
+#          ) +
+#   geom_point(aes(x=estimate, y=term)) +
+#   geom_segment(aes(x = estimate-std.error, xend = estimate+std.error,
+#                    y = term)) +
+#   geom_vline(xintercept = 0, lty = 2, lwd=.5) +
+#   facet_wrap(~response, scales = 'free', ncol = 1) +
+#   xlab("Estimate") +
+#   ylab("Response Variable") +
+#   theme_bw() 
+# ggsave('out/figure_4_glmm_caterpillar.png', width = 3.5, height = 6, bg = 'white')
 
 # naive models ===========================================================
-mod_pic <- glmmTMB(invaded ~ site + phase + PlotTreatmentStatus + 
-                    (1|plot), 
-                  data = plot_level_metrics,
-                  family = 'binomial'); summary(mod_pic); AIC(mod_pic); car::Anova(mod_pic); performance::r2(mod_pic)
+mod_pic <- glmmTMB(invaded ~ #site + 
+                     phase * PlotTreatmentStatus + 
+                     (1|trt_u_adj/plot), 
+                   data = plot_level_metrics,REML = T,
+                  family = 'binomial')#; summary(mod_pic); AIC(mod_pic); car::Anova(mod_pic); performance::r2(mod_pic)
 
-mod_ncc <- glmmTMB(I(native_cover/100) ~  site + phase + PlotTreatmentStatus + 
-                    (1|plot), 
-                  data = plot_level_metrics,
+mod_ncc <- glmmTMB(I(native_cover/100) ~ #site + 
+                     phase * PlotTreatmentStatus + 
+                     (1|plot), 
+                   data = plot_level_metrics,REML = T,
                   family = beta_family())
+# summary(mod_ncc); performance::r2(mod_ncc)
 
-mod_nrc <- glmmTMB(nspp_native ~ site + phase + PlotTreatmentStatus + 
-                    (1|plot), 
-                  data = plot_level_metrics,
+mod_nrc <- glmmTMB(nspp_native ~#site + 
+                     phase * PlotTreatmentStatus + 
+                     (1|plot), 
+                   data = plot_level_metrics,REML = T,
                   family = 'poisson')
-mod_errc <- glmmTMB(I(err + 0.000001) ~ site + phase + PlotTreatmentStatus + 
-                     (1|plot), 
-                   data = plot_level_metrics |> filter(err < 1500),
+# performance::r2(mod_nrc)
+mod_errc <- glmmTMB(I(err + 0.000001) ~ #site + 
+                      phase * PlotTreatmentStatus + 
+                      (1|trt_u_adj/plot), 
+                   data = plot_level_metrics,REML = T,
                    family = beta_family())
-summary(mod_errc); performance::r2(mod_errc)
+# summary(mod_errc); performance::r2(mod_errc)
 
-mod_ercc <- glmmTMB(I(graminoid_cover/100) ~ site + phase + PlotTreatmentStatus + #treated + 
-                     (1|plot), 
-                   data = plot_level_metrics,
-                   map = list(theta = factor(NA)),
+mod_ercc <- glmmTMB(I(graminoid_cover/100) ~ #site + 
+                      phase * PlotTreatmentStatus + 
+                      (1|trt_u_adj/plot), 
+                   data = plot_level_metrics,REML = T,
+                   #map = list(theta = factor(NA)),
                    family = beta_family())
-summary(mod_ercc);performance::r2(mod_ercc)
+# summary(mod_ercc);performance::r2(mod_ercc)
 
-bmod_ercc <- brm(erc ~ site + phase + PlotTreatmentStatus + #treated + 
-                      (1|plot), 
-                    data = plot_level_metrics, 
-                    family = 'zero_inflated_beta')
-summary(bmod_ercc); performance::r2(bmod_ercc)
+# bmod_ercc <- brm(erc ~ site + phase + PlotTreatmentStatus + #treated + 
+#                       (1|plot), 
+#                     data = plot_level_metrics, 
+#                     family = 'zero_inflated_beta')
+# summary(bmod_ercc); performance::r2(bmod_ercc)
 # r2 table =====================================================================
 
 aic_c <-  lapply(list(mod_pic, mod_errc, mod_ercc, mod_nrc, mod_ncc), MuMIn::AICc) |>
@@ -285,6 +293,60 @@ r2_tab <- lapply(list(mod_pi, mod_err, mod_erc, mod_nr, mod_nc),
   mutate_if(is.numeric, signif, 2)
 
 write_csv(r2_tab,'out/r2_table.csv')
+
+# coefficients table ===========================================================
+resps <-  c("Graminoid Cover", "Exotic Relative Richness", "Native Cover", "Native Richness", "P(Invasion)")
+naive_models <- list(mod_ercc, mod_errc, mod_ncc, mod_nrc, mod_pic)
+ss_models <- list(mod_erc, mod_err, mod_nc, mod_nr, mod_pi)
+
+lapply(naive_models,performance::model_performance) |> bind_rows() |>
+  mutate(response = c("Graminoid Cover", "Exotic Relative Richness", "Native Cover", "Native Richness", "P(Invasion)"))
+lapply(ss_models,performance::model_performance) |> bind_rows() |>
+  mutate(response = c("Graminoid Cover", "Exotic Relative Richness", "Native Cover", "Native Richness", "P(Invasion)"))
+
+ll <- list()
+for(i in 1:length(naive_models)){
+  ll[[i]] <- car::Anova(naive_models[[i]], test.statistic = "Chisq", type = "II") |>
+    broom::tidy() %>%
+    mutate(response = resps[i],
+           pgroup = 'trt',
+           pnum = letters[1:nrow(.)])
+}
+lll <- list()
+for(i in 1:length(ss_models)){
+  lll[[i]] <- car::Anova(ss_models[[i]], test.statistic = "Chisq", type = "II") |>
+    broom::tidy() %>%
+    mutate(response = resps[i],
+           pgroup = 'ss',
+           pnum = letters[1:nrow(.)])
+}
+bind_rows(ll, lll)|>
+  dplyr::mutate(star = case_when(p.value >= 0.1 ~ "",
+                                 p.value < 0.1 & p.value >= 0.05 ~ '.',
+                                 p.value < 0.05 & p.value >= 0.01 ~ '*',
+                                 p.value < 0.01 & p.value >= 0.001 ~ '**',
+                                 p.value < 0.001 ~ "***"))|>
+  pivot_wider(names_from = c(pgroup), values_from = c(term, star, statistic, p.value, df)) |>
+  dplyr::mutate_if(is.numeric, round, 2) |>
+  dplyr::mutate(trtstat = str_c(statistic_trt, star_trt),
+                ssstat = str_c(statistic_ss, star_ss),
+                term_trt = str_replace_all(term_trt, '\\:', ' x ') |>
+                  str_replace_all("PlotTreatmentStatus", "Treatment") |>
+                  str_replace_all('phase', "Timestep"),
+                term_ss = term_ss |> str_replace_all('tpa', 'Tree Density') |>
+                  str_replace_all('def_z_trt', 'CWD(z) Treatment Year') |>
+                  str_replace_all('cwd_z', 'CWD(z) Sample Year') |>
+                  str_replace_all("total_cover", "Total Cover") |>
+                  str_replace_all('ns\\(def_norm, 2\\)', 'CWD normal') |>
+                  str_replace_all('hli', 'Heat Load') |>
+                  str_replace_all("twi", 'Topographic Wetness') |>
+                  str_replace_all('ba_m2perha', "Basal Area") |>
+                  str_replace_all('fwd', "Fine Woody Debris Cover") |>
+                  str_replace_all('quadratic_mean_d', 'Quadratic Mean D')) |>
+  dplyr::select(response,term_trt,trtstat, term_ss,ssstat) |>
+  arrange(response) |> #print(n=99)
+  write_csv('out/table5_glmms.csv')
+
 
 # make an effects plot =========================================================
 p_df0 <- bind_rows(
@@ -341,7 +403,7 @@ plot_row <- function(p_df, legend = F){
 
 rpi <- plot_row(filter(p_df,response == "P(Invasion)"))
 rer <- plot_row(filter(p_df,response == "Exotic Relative Richness"))
-rec <- plot_row(filter(p_df,response == "Graminoid Cover"))
+rgc <- plot_row(filter(p_df,response == "Graminoid Cover"))
 rnr <- plot_row(filter(p_df,response == "Native Richness"))
 rnc <- plot_row(filter(p_df,response == "Native Cover"))
 
@@ -350,65 +412,9 @@ leg <- plot_row(filter(p_df,response == "Native Richness"), legend = TRUE) |> as
 full <- cowplot::ggdraw(xlim =c(0,5), ylim =c(0,5))+  
   draw_plot(rnr, 0, 4, 5, 1) +  
   draw_plot(rnc, 0, 3, 5, 1) +
-  draw_plot(rec, 0, 2, 5, 1) +
+  draw_plot(rgc, 0, 2, 5, 1) +
   draw_plot(rpi, 0, 1, 4.05, 1) +
   draw_plot(rer, 0, 0, 4.05, 1)+
   draw_plot(leg, 4, 1, 1, 1);full
 
 ggsave(plot = full, filename = 'out/figure_5_effects_plots.png', height = 10, width = 10, bg='white')
-# partial effects plots ========================================================
-ggarrange(
-  plot(ggeffects::ggpredict(mod_pi, terms = c('def_norm')), show_residuals = F) +
-    ggtitle("A") +
-    xlab("Climatic Water Deficit (30 year normal)") +
-    ylab("P(Invasion)"),
-  plot(ggeffects::ggpredict(mod_pi, terms = c('cwd_z')), show_residuals = F) +
-    ggtitle("B") +
-    xlab("CWD Z-Score, year of sampling") +
-    ylab("P(Invasion)"),
-  plot(ggeffects::ggpredict(mod_pi, terms = c('total_cover')), show_residuals = F) +
-    ggtitle("C") +
-    xlab("Total Vegetation Cover (%)") +
-    ylab("P(Invasion)"),
-  plot(ggeffects::ggpredict(mod_pi, terms = c('def_z_trt')), show_residuals = F) +
-    scale_y_log10() +
-    ggtitle("D") +
-    xlab("CWD Z-Score, year of treatment") +
-    ylab("P(Invasion)"),
-  # plot(ggeffects::ggpredict(mod_erc, terms = c('ba_m2perha')), show_residuals = T)+
-  #   scale_y_log10() +
-  #   ggtitle("E") +
-  #   xlab("Basal Area (m2/ha)") +
-  #   ylab("Exotic Relative Cover"),
-  plot(ggeffects::ggpredict(mod_nc, terms = c('ba_m2perha')), show_residuals = T) +
-    ggtitle("F") +
-    xlab("Basal Area (m2/ha)") +
-    ylab("Native cover (Fractional)"),
-  plot(ggeffects::ggpredict(mod_err, terms = c('tpa')), show_residuals = T, jitter=T) +
-    scale_y_continuous(transform = 'log10', limits = c(NA, 1))+
-    ggtitle("G") +
-    xlab("Tree Density (Trees Per Acre)") +
-    ylab("Exotic Relative Richness"),
-  plot(ggeffects::ggpredict(mod_err, terms = c('cwd_z')), show_residuals = T, jitter=T)+
-    scale_y_continuous(transform = 'log10', limits = c(NA, 1))+
-    ggtitle("H") +
-    xlab("CWD Z-Score") +
-    ylab("Exotic Relative Richness"),
-  plot(ggeffects::ggpredict(mod_err, terms = c('native_cover')), show_residuals = T, jitter=T)+
-    scale_y_continuous(transform = 'log10', limits = c(NA, 1))+
-    ggtitle("I") +
-    xlab("Native Cover (%)") +
-    ylab("Exotic Relative Richness"),
-  plot(ggeffects::ggpredict(mod_nr, terms = c('def_norm')), show_residuals = T) +
-    ggtitle("J") +
-    xlab("Climatic Water Deficit (30 year normal)") +
-    ylab("Native Species Richness"),
-  plot(ggeffects::ggpredict(mod_nr, terms = c('tpa')), show_residuals = T) +
-    ggtitle("K") +
-    xlab("Tree Density (Trees per Acre)") +
-    ylab("Native Species Richness"),
-  nrow = 4, ncol = 3)
-ggsave('out/figure5_all_partials.png', width = 9, height = 9, bg='white')
-
-lapply(list(mod_erc, mod_err, mod_pi, mod_nr, mod_nc),performance::model_performance) |>
-  bind_rows()

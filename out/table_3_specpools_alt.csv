@@ -1,0 +1,13 @@
+phase,spp,Control,Treatment
+0pre,exotic,7 (1),5 (1)
+post_01,exotic,6 (1),5 (1)
+post_05,exotic,6 (1),14 (1)
+post_10,exotic,10 (1),15 (1)
+0pre,native,151 (6),140 (6)
+post_01,native,144 (8),130 (6)
+post_05,native,145 (5),161 (8)
+post_10,native,162 (7),187 (11)
+0pre,total,165 (7),149 (7)
+post_01,total,154 (9),140 (6)
+post_05,total,153 (6),181 (9)
+post_10,total,177 (8),209 (12)
