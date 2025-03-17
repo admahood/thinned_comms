@@ -132,3 +132,10 @@ pools |>
   arrange(spp, phase) |>
   write_csv("out/table_3_specpools_alt.csv")
 
+
+pools |>
+  dplyr::mutate(boot = paste0(round(boot), " (", round(boot.se), ")")) |>
+  dplyr::select(phase, spp,PlotTreatmentStatus,  boot) |>
+  pivot_wider(names_from = phase, values_from = boot) |>
+  arrange(spp, PlotTreatmentStatus) |>
+  write_csv("out/table_3_specpools_final.csv")

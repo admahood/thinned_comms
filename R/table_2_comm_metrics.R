@@ -111,6 +111,6 @@ lapply(list(fit1, fit2, fit3, fit4, fit5), performance::r2)
 bind_rows(list(emerr, emerc, emtc, emtr, emin)) |>
   dplyr::mutate(emm = paste0(round(estimate,2), " (", round(std.error, 2), ")")) |>
   dplyr::select(response, phase, Treatment = PlotTreatmentStatus, emm) |>
-  pivot_wider(values_from = emm, names_from = response) |>
+  pivot_wider(values_from = emm, names_from = phase) |>
   # left_join(inv) |>
-  write_csv('out/table_1_emms.csv')
+  write_csv('out/table_2_emms.csv')
