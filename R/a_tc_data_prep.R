@@ -1,4 +1,4 @@
-olibrary(tidyverse)
+library(tidyverse)
 library(janitor)
 
 # site and plot visits =========================================================
