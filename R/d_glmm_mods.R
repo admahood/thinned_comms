@@ -13,6 +13,26 @@ library(broom.mixed)
 library(broom)
 library(cowplot)
 
+forbs <- cover_plot %>%
+  filter(!CodeType %in% non_plant_codes) %>%
+  filter(!CodeType %in% c("Fuel in Air", "UNK", "Tree")) |>
+  left_join(sp_list |> mutate(SpeciesCode = str_to_lower(SpeciesCode))) |>
+  tidyr::replace_na(list(NativityL48 = "Unknown")) |>
+  group_by(new_visit_code) |>
+  mutate(tc = sum(cover)) |>
+  ungroup() |>
+  group_by(CodeType, new_visit_code, PlotTreatmentStatus, tc) |>
+  summarise(cover = sum(cover)) |>
+  ungroup() |>
+  mutate(rel_cover = (cover/tc)*100) |>
+  tidyr::replace_na(list(Lifespan = '')) |>
+  mutate(name = paste0(#Lifespan, "_", 
+    CodeType)) |>
+  tidyr::separate(new_visit_code, sep = "\\.", into = c('plot', 'phase')) |>
+  dplyr::mutate(site = ifelse(str_sub(plot,1,1) == "E", "E", "P")) |>
+  dplyr::filter(name == "Forb") |>
+  dplyr::select(PlotCode = plot, phase_adj = phase, forb_cover = cover)
+
 plot_level_metrics <- read_csv("data/plot_level_data.csv")  |>
   filter(!PlotCode %in% c('P1-2-T-615-01', 'P1-2-T-615-02 ')) |>
   dplyr::rename(ba_m2perha = ba_m2pherha) |>
@@ -21,7 +41,8 @@ plot_level_metrics <- read_csv("data/plot_level_data.csv")  |>
   dplyr::mutate_if(is.character, as.factor) |>
   left_join(read_csv('data/terraclim_cwd_z.csv')) |>
   mutate(total_cover = native_cover + exotic_cover) |>
-  tidyr::replace_na(list(seedlings_per_ha = 0))
+  tidyr::replace_na(list(seedlings_per_ha = 0)) |>
+  left_join(forbs)
   
 # glimpse(plot_level_metrics);summary(plot_level_metrics)
 
@@ -81,8 +102,28 @@ mod_erc <- glmmTMB(I(graminoid_cover/100) ~
             na.action = na.fail,
             family = beta_family(), 
 )
+
+mod_forb <- glmmTMB(I(forb_cover/100) ~ 
+                     # erc +
+                     total_cover +
+                     # def_norm +
+                     ns(def_norm,2) +
+                     # def_z_trt +
+                     cwd_z +
+                     # quadratic_mean_diameter +
+                     # fwd +
+                     hli +
+                     tpa +
+                     # seedlings_per_ha +
+                     # ba_m2perha +
+                     (1|plot), REML = T, #map = list(theta = factor(NA)), 
+                   # start = list(theta = log(10)), #cores = 4, file = 'data/erc_mod',
+                   data = plot_level_metrics, 
+                   na.action = na.fail,
+                   family = beta_family(), 
+)
 # MuMIn::dredge(mod_erc)
-# summary(mod_erc); performance::r2(mod_erc); performance::check_model(mod_erc); car::Anova(mod_erc); AIC(mod_erc)
+summary(mod_forb); performance::r2(mod_forb); performance::check_model(mod_forb); car::Anova(mod_forb); AIC(mod_forb)
 # plot(ggeffects::ggpredict(mod_erc))
 # 
 # t0 <- Sys.time()
@@ -242,7 +283,13 @@ mod_ercc <- glmmTMB(I(graminoid_cover/100) ~ #site +
                    data = plot_level_metrics,REML = T,
                    #map = list(theta = factor(NA)),
                    family = beta_family())
-# summary(mod_ercc);performance::r2(mod_ercc)
+
+mod_forbc <- glmmTMB(I(forb_cover/100) ~ #site + 
+                      phase * PlotTreatmentStatus + 
+                      (1|plot), 
+                    data = plot_level_metrics,REML = T,
+                    family = beta_family())
+# summary(mod_ercc);performance::r2(mod_forbc)
 
 # bmod_ercc <- brm(erc ~ site + phase + PlotTreatmentStatus + #treated + 
 #                       (1|plot), 
@@ -272,22 +319,22 @@ aic_tab <- lapply(list(mod_pi, mod_err, mod_erc, mod_nr, mod_nc), MuMIn::AICc) |
   mutate_if(is.numeric, round, 2)  |>
   dplyr::select(response, delta_aic)
 
-r2c <-  lapply(list(mod_pic, mod_errc, mod_ercc, mod_nrc, mod_ncc), 
+r2c <-  lapply(list(mod_pic, mod_errc, mod_ercc, mod_nrc, mod_ncc, mod_forbc), 
                function(x)performance::r2(x)) |>
   bind_rows() |>
   
-  dplyr::mutate(response = c("P(Invasion)", "Exotic Relative Richness", 
+  dplyr::mutate(response = c("P(Invasion)", "Invasion Rate", 
                              "Graminoid Cover", 'Native Richness',
-                             'Native Cover'))|>
+                             'Native Cover', "Forb Cover"))|>
   dplyr::select(3,'naive' = 2)
   
   
-r2_tab <- lapply(list(mod_pi, mod_err, mod_erc, mod_nr, mod_nc), 
+r2_tab <- lapply(list(mod_pi, mod_err, mod_erc, mod_nr, mod_nc, mod_forb), 
                  function(x)performance::r2(x)) |>
   bind_rows() |>
-  dplyr::mutate(response = c("P(Invasion)", "Exotic Relative Richness", 
+  dplyr::mutate(response = c("P(Invasion)", "Invasion Rate", 
                              "Graminoid Cover", 'Native Richness',
-                             'Native Cover')) |>
+                             'Native Cover', "Forb Cover")) |>
   dplyr::select(3, informed = 2) |>
   left_join(r2c) |>
   mutate_if(is.numeric, signif, 2)
@@ -295,14 +342,15 @@ r2_tab <- lapply(list(mod_pi, mod_err, mod_erc, mod_nr, mod_nc),
 write_csv(r2_tab,'out/r2_table.csv')
 
 # coefficients table ===========================================================
-resps <-  c("Graminoid Cover", "Exotic Relative Richness", "Native Cover", "Native Richness", "P(Invasion)")
-naive_models <- list(mod_ercc, mod_errc, mod_ncc, mod_nrc, mod_pic)
-ss_models <- list(mod_erc, mod_err, mod_nc, mod_nr, mod_pi)
+resps <-  c("Graminoid Cover", "Invasion Rate", "Native Cover", 
+            "Native Richness", "P(Invasion)", "Forb Cover")
+naive_models <- list(mod_ercc, mod_errc, mod_ncc, mod_nrc, mod_pic, mod_forbc)
+ss_models <- list(mod_erc, mod_err, mod_nc, mod_nr, mod_pi, mod_forb)
 
 lapply(naive_models,performance::model_performance) |> bind_rows() |>
-  mutate(response = c("Graminoid Cover", "Exotic Relative Richness", "Native Cover", "Native Richness", "P(Invasion)"))
+  mutate(response = resps)
 lapply(ss_models,performance::model_performance) |> bind_rows() |>
-  mutate(response = c("Graminoid Cover", "Exotic Relative Richness", "Native Cover", "Native Richness", "P(Invasion)"))
+  mutate(response = resps)
 
 ll <- list()
 for(i in 1:length(naive_models)){
@@ -351,46 +399,51 @@ bind_rows(ll, lll)|>
 # make an effects plot =========================================================
 p_df0 <- bind_rows(
   lapply(ggeffects::ggpredict(mod_pi), as.data.frame) |> 
-    bind_rows() |> mutate(response = "P(Invasion)"),
+    bind_rows() |> mutate(response = "E. P(Invasion)"),
   lapply(ggeffects::ggpredict(mod_err), as.data.frame) |> 
-    bind_rows() |> mutate(response = "Exotic Relative Richness"),
+    bind_rows() |> mutate(response = "F. Invasion Rate"),
   lapply(ggeffects::ggpredict(mod_erc), as.data.frame) |> 
-    bind_rows() |> mutate(response = "Graminoid Cover"),
+    bind_rows() |> mutate(response = "D. Graminoid Cover"),
   lapply(ggeffects::ggpredict(mod_nr), as.data.frame) |> 
-    bind_rows() |> mutate(response = "Native Richness"),
+    bind_rows() |> mutate(response = "B. Native Richness"),
   lapply(ggeffects::ggpredict(mod_nc), as.data.frame) |> 
-    bind_rows() |> mutate(response = "Native Cover")
+    bind_rows() |> mutate(response = "A. Native Cover"),
+  lapply(ggeffects::ggpredict(mod_forb), as.data.frame) |> 
+    bind_rows() |> mutate(response = "C. Forb Cover") |>
+    filter(conf.high < 20)
 )
 
 p_df <- p_df0 |>
   mutate(type = case_when(
                   str_sub(group,1,3) %in% c('def', 'aet', 'cwd') ~ 'Climate',
                   group %in% c('hli', 'twi', 'slope') ~ "Topography",
-                  str_sub(group,1,3) %in% c(c('tot', 'tpa', 'qua', 'fwd', "ba_")) ~ "Stand\nStructure"),
+                  str_sub(group,1,3) %in% c('tot', 'tpa', 'qua', 'fwd', "ba_") ~ "Stand\nStructure"),
          group = case_when(
-           group == 'cwd_z' ~ "CWD Z: Sample Year",
-           group == 'def_norm' ~ "CWD: 30-year Normal",
-           group == 'hli' ~ "Heat Load Index",
+           group == 'cwd_z' ~ ".CWD Z: Sample Year",
+           group == 'def_norm' ~ ".CWD: 30-year Normal",
+           group == 'hli' ~ "_Heat Load Index",
            group == 'total_cover' ~ "Total Veg Cover",
            group == 'tpa' ~ "Trees/ha",
            group == 'fwd' ~ "Fine Woody Debris",
            group == 'quadratic_mean_diameter' ~ "QMD",
-           group == 'slope' ~ "Slope",
+           group == 'slope' ~ "_Slope",
            group == 'ba_m2perha' ~ 'Basal Area (m2/ha)',
-           group == 'twi' ~ "TWI",
-           group == 'def_z_trt' ~ "CWD Z: Year of Treatment"),
-         predicted = ifelse(str_sub(response,1,8) %in% c("Exotic R", "Native C", "Graminoi"), predicted * 100, predicted),
-         conf.high = ifelse(str_sub(response,1,8) %in% c("Exotic R", "Native C", "Graminoi"), conf.high  * 100, conf.high ),
-         conf.low = ifelse(str_sub(response,1,8) %in% c("Exotic R", "Native C", "Graminoi"), conf.low  * 100, conf.low )
-  )
+           group == 'twi' ~ "_TWI",
+           group == 'def_z_trt' ~ ".CWD Z: Year of Treatment"),
+         predicted = ifelse(str_sub(response,1,8) %in% c("Invasion"), predicted * 100, predicted),
+         conf.high = ifelse(str_sub(response,1,8) %in% c("Invasion"), conf.high  * 100, conf.high ),
+         conf.low = ifelse(str_sub(response,1,8) %in% c("Invasion"), conf.low  * 100, conf.low )
+         
+  ) |>
+  filter(group != "Total Veg Cover" | x < 80)
     
 
 plot_row <- function(p_df, legend = F){
   p <- ggplot(p_df, aes(x=x, y = predicted)) +
     geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = type)) +
     geom_line(lwd=1) +
-    geom_line(aes(y=conf.low), lty = 3, lwd=.5) +
-    geom_line(aes(y=conf.high), lty = 3, lwd=.5) +
+    geom_line(aes(y=conf.low), lty = 1, lwd=.15) +
+    geom_line(aes(y=conf.high), lty = 1, lwd=.15) +
     facet_wrap(~group, scales = 'free_x', nrow = 1) +
     scale_fill_brewer(palette = "Set2")+
     ylab(p_df$response) +
@@ -401,20 +454,22 @@ plot_row <- function(p_df, legend = F){
 
 
 
-rpi <- plot_row(filter(p_df,response == "P(Invasion)"))
-rer <- plot_row(filter(p_df,response == "Exotic Relative Richness"))
-rgc <- plot_row(filter(p_df,response == "Graminoid Cover"))
-rnr <- plot_row(filter(p_df,response == "Native Richness"))
-rnc <- plot_row(filter(p_df,response == "Native Cover"))
+rpi <- plot_row(filter(p_df,response == "E. P(Invasion)"))
+rer <- plot_row(filter(p_df,response == "F. Invasion Rate"))
+rgc <- plot_row(filter(p_df,response == "D. Graminoid Cover"))
+rnr <- plot_row(filter(p_df,response == "B. Native Richness"))
+rnc <- plot_row(filter(p_df,response == "A. Native Cover"))
+rf <- plot_row(filter(p_df,response == "C. Forb Cover"))
 
-leg <- plot_row(filter(p_df,response == "Native Richness"), legend = TRUE) |> as_ggplot()
+leg <- plot_row(filter(p_df,response == "B. Native Richness"), legend = TRUE) |> as_ggplot()
 
-full <- cowplot::ggdraw(xlim =c(0,5), ylim =c(0,5))+  
+full <- cowplot::ggdraw(xlim =c(0,5), ylim =c(0,6)) +  
+  draw_plot(rnc, 0, 5, 5, 1) +
   draw_plot(rnr, 0, 4, 5, 1) +  
-  draw_plot(rnc, 0, 3, 5, 1) +
+  draw_plot(rf, 0, 3, 5, 1) +
   draw_plot(rgc, 0, 2, 5, 1) +
   draw_plot(rpi, 0, 1, 4.05, 1) +
   draw_plot(rer, 0, 0, 4.05, 1)+
   draw_plot(leg, 4, 1, 1, 1);full
 
-ggsave(plot = full, filename = 'out/figure_5_effects_plots.png', height = 10, width = 10, bg='white')
+ggsave(plot = full, filename = 'out/figure_5_effects_plots.png', height = 9, width = 9, bg='white')

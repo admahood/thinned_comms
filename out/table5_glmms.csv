@@ -1,24 +1,29 @@
 response,term_trt,trtstat,term_ss,ssstat
-Exotic Relative Richness,phase,56.82***,Tree Density,7.62**
-,Treatment,3.97*,CWD(z) Treatment Year,22.67***
-,phase x Treatment,10.84*,CWD(z) Sample Year,17.89***
-,,,Total Cover,14.95***
-Graminoid Cover,phase,225.08***,CWD normal,6.09*
-,Treatment,1.99,CWD(z) Sample Year,10.89***
-,phase x Treatment,32.79***,Heat Load,5.49*
-,,,Tree Density,13.85***
-,,,Basal Area,4.44*
-Native Cover,phase,210.98***,CWD(z) Sample Year,25.21***
-,Treatment,0,Fine Woody Debris Cover,3.03.
-,phase x Treatment,37.1***,Quadratic Mean Diameter,5.09*
-,,,slope,4.25*
-,,,Topographic Wetness,4.01*
-Native Richness,phase,32.89***,CWD normal,26.87***
-,Treatment,0.3,CWD(z) Sample Year,9.09**
-,phase x Treatment,3.5,Heat Load,27.98***
-,,,Tree Density,17.28***
-,,,Total Cover,13.76***
-P(Invasion),phase,34.5***,CWD(z) Sample Year,26.73***
-,Treatment,2.2,CWD normal,12.47**
-,phase x Treatment,4.24,CWD(z) Treatment Year,24.21***
-,,,Total Cover,8.21**
+Forb Cover,Timestep,169.97***,Total Cover,371.52***
+Forb Cover,Treatment,0.45,CWD normal,10.23**
+Forb Cover,Timestep x Treatment,31.06***,CWD(z) Sample Year,5.94*
+Forb Cover,NA,NA,Heat Load,14.39***
+Forb Cover,NA,NA,Tree Density,8.13**
+Graminoid Cover,Timestep,225.08***,CWD normal,6.09*
+Graminoid Cover,Treatment,1.99,CWD(z) Sample Year,10.89***
+Graminoid Cover,Timestep x Treatment,32.79***,Heat Load,5.49*
+Graminoid Cover,NA,NA,Tree Density,13.85***
+Graminoid Cover,NA,NA,Basal Area,4.44*
+Invasion Rate,Timestep,56.82***,Tree Density,7.62**
+Invasion Rate,Treatment,3.97*,CWD(z) Treatment Year,22.67***
+Invasion Rate,Timestep x Treatment,10.84*,CWD(z) Sample Year,17.89***
+Invasion Rate,NA,NA,Total Cover,14.95***
+Native Cover,Timestep,210.98***,CWD(z) Sample Year,25.21***
+Native Cover,Treatment,0,Fine Woody Debris Cover,3.03.
+Native Cover,Timestep x Treatment,37.1***,Quadratic Mean Diameter,5.09*
+Native Cover,NA,NA,slope,4.25*
+Native Cover,NA,NA,Topographic Wetness,4.01*
+Native Richness,Timestep,32.89***,CWD normal,26.87***
+Native Richness,Treatment,0.3,CWD(z) Sample Year,9.09**
+Native Richness,Timestep x Treatment,3.5,Heat Load,27.98***
+Native Richness,NA,NA,Tree Density,17.28***
+Native Richness,NA,NA,Total Cover,13.76***
+P(Invasion),Timestep,34.5***,CWD(z) Sample Year,26.73***
+P(Invasion),Treatment,2.2,CWD normal,12.47**
+P(Invasion),Timestep x Treatment,4.24,CWD(z) Treatment Year,24.21***
+P(Invasion),NA,NA,Total Cover,8.21**

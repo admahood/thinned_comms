@@ -1,6 +1,7 @@
 response,informed,naive
 P(Invasion),0.56,0.3
-Exotic Relative Richness,0.86,0.58
+Invasion Rate,0.86,0.58
 Graminoid Cover,0.54,0.42
 Native Richness,0.41,0.088
 Native Cover,0.35,0.35
+Forb Cover,0.76,0.34

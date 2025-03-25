@@ -50,6 +50,12 @@ qmd <- cp_tree |>
   ungroup() |>
   dplyr::select(-n,-TreatmentUnit)
 
+cbh <- cp_tree |>
+  mutate(cbh_m = CBH/.3048)|>
+  group_by(PlotCode, PlotTreatmentStatus, phase_adj, new_visit_code, TreatmentUnit)|>
+  summarise(cbh_m =mean(cbh_m, na.rm=T)) |>
+  ungroup(-TreatmentUnit)
+
 # side quest - qmd trend
 # qmd_dat <- qmd |>
 #   filter(PlotTreatmentStatus == "Treatment") |>
@@ -71,7 +77,8 @@ fwd <- fuel_cover_by_type |>
 means <- left_join(density, ba_m2ha) |> 
   left_join(qmd) |>
   left_join(fwd) |>
-  pivot_longer(cols = c(tpa, qmd, ba_m2perha, fwd))
+  left_join(cbh) |>
+  pivot_longer(cols = c(tpa, qmd, ba_m2perha, fwd, cbh_m))
 
 # table 1: emmeans =============================================================
 
@@ -88,11 +95,11 @@ ems <- list()
 emstat <- list()
 cc <- 1
 for(i in unique(allmeans$name)) {
-  fit <- lmerTest::lmer(value ~ phase_adj*PlotTreatmentStatus + (1|site/PlotCode), 
+  fit <- lmerTest::lmer(value ~ phase_adj*PlotTreatmentStatus + site + (1|site:PlotCode), 
                  data = allmeans |> filter(name == i))
   emm <- emmeans(fit, ~ PlotTreatmentStatus | phase_adj) 
   ems[[cc]] <- emm |> 
-    broom.mixed::tidy() |>
+    broom.mixed::tidy(conf.int = T) |>
     mutate(response = i)
   emstat[[cc]] <- pairs(emm) |> broom::tidy() |> mutate(response = i)
   cc<- cc + 1
@@ -108,9 +115,13 @@ em_star <-
   dplyr::select(response, phase_adj, star) 
 
 bind_rows(ems) |>
-  left_join(em_star) |>
-  dplyr::mutate(value = str_c(signif(estimate,3), " (", signif(std.error,3), ") ", star) |> trimws()) |>
-  dplyr::select(-statistic, -df, -p.value, -estimate, -std.error, -star) |>
+  # left_join(em_star) |>
+  dplyr::mutate(conf.low = ifelse(conf.low < 0, 0, conf.low),
+    value = str_c(signif(estimate,3), " (", 
+                              round(conf.low), ", ",
+                              round(conf.high), ") ") |> 
+                  trimws()) |>
+  dplyr::select(-statistic, -df, -p.value, -estimate, -std.error, -starts_with('conf')) |>
   tidyr::pivot_wider(names_from = phase_adj, values_from = value) |>
   janitor::clean_names() |>
   dplyr::select(response, trt = 1, 3, 4,5,6) |>
@@ -134,7 +145,7 @@ diffss <- means |>
 smstats <- list()
 cc <- 1
 for(i in unique(diffss$name)) {
-  lmerTest::lmer(dv ~ phase*PlotTreatmentStatus + (1|site/plot), 
+  lmerTest::lmer(dv ~ phase*PlotTreatmentStatus + site + (1|site:plot), 
                  data = diffss |> filter(name == i)) -> fit
   em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
   smstats[[cc]] <- pairs(em) |> broom::tidy() |> mutate(response = i)
@@ -158,7 +169,8 @@ for(ph in unique(diffss$phase)){
   }
 }
 diff0ss <- bind_rows(result) |>
-  mutate(sig0 = ifelse(p.value < 0.05, "Significant\nChange From\nPre-Treatment", 'ns')) |>
+  mutate(sig0 = ifelse(p.value <= 0.05, "Significant\nChange", 'No Change')) |>
+  tidyr::replace_na(list(sig0 = "No Change")) |>
   dplyr::select(phase, name, PlotTreatmentStatus, sig0)
 
 
@@ -166,7 +178,7 @@ diff0ss <- bind_rows(result) |>
 contrastss <- bind_rows(smstats) |>
   mutate(sig = ifelse(p.value < 0.05, "*", "")) |>
   dplyr::select(phase, name = response, sig) |>
-  mutate(position = c(50,250,150,4,5,9,1,11,5,13,13,13, 5000, 5000, 5000))
+  mutate(position = c(50,250,150,4,5,9,1,11,5,13,13,13,5,5,5, 5000, 5000, 5000))
 
 diffss |>
   left_join(diff0ss) |>
@@ -175,6 +187,7 @@ diffss |>
                                   phase == "post04-5" ~ '05',
                                   phase == "post10-11" ~ "10"),
                 name = case_when(name == "tpa" ~ "Trees/ha",
+                                 name == 'cbh_m' ~ "Crown Base Height (m)",
                                  name == 'fwd' ~ "Fine Woody Debris (%)",
                                  name == 'ba_m2perha' ~ 'Basal Area (m2/ha)',
                                  name == 'seedling_density' ~ "Seedlings/ha",
@@ -190,11 +203,12 @@ ggplot(aes(x=phase, y=dv, fill = PlotTreatmentStatus)) +
   ylab("Change From Pre-Treatment") +
   xlab("Years Since Treatment") +
   theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.position = c(.9, .1),
-        legend.justification = c(1,0))
+  theme(legend.title = element_blank(),legend.position = 'bottom'
+        #legend.position = c(.9, .1),
+        #legend.justification = c(1,0)
+        )
 
-ggsave('out/figure_1_stand_metric_changes.png', width = 9, height =6, bg = 'white')
+ggsave('out/figure_1_stand_metric_changes.png', width = 7, height =5.5, bg = 'white')
 
 diffss |> group_by(name, PlotTreatmentStatus) |> summarise(meanv = mean(dv))
 
