@@ -297,27 +297,27 @@ mod_forbc <- glmmTMB(I(forb_cover/100) ~ #site +
 #                     family = 'zero_inflated_beta')
 # summary(bmod_ercc); performance::r2(bmod_ercc)
 # r2 table =====================================================================
-
-aic_c <-  lapply(list(mod_pic, mod_errc, mod_ercc, mod_nrc, mod_ncc), MuMIn::AICc) |>
-  unlist() |>
-  as.data.frame() |>
-  dplyr::mutate(response = c("P(Invasion)", "Exotic Relative Richness", 
-                             "Graminoid Cover", 'Native Richness',
-                             'Native Cover'))|>
-  dplyr::select('naive' = 1,'response' = 2)
-
-
-aic_tab <- lapply(list(mod_pi, mod_err, mod_erc, mod_nr, mod_nc), MuMIn::AICc) |>
-  unlist() |>
-  as.data.frame() |>
-  dplyr::mutate(response = c("P(Invasion)", "Exotic Relative Richness", 
-                             "Graminoid Cover", 'Native Richness',
-                             'Native Cover'))|>
-  dplyr::select('response' = 2,'stand_metrics' = 1) |>
-  left_join(aic_c)|>
-  mutate(delta_aic = naive - stand_metrics) |>
-  mutate_if(is.numeric, round, 2)  |>
-  dplyr::select(response, delta_aic)
+# 
+# aic_c <-  lapply(list(mod_pic, mod_errc, mod_ercc, mod_nrc, mod_ncc), MuMIn::AICc) |>
+#   unlist() |>
+#   as.data.frame() |>
+#   dplyr::mutate(response = c("P(Invasion)", "Exotic Relative Richness", 
+#                              "Graminoid Cover", 'Native Richness',
+#                              'Native Cover'))|>
+#   dplyr::select('naive' = 1,'response' = 2)
+# 
+# 
+# aic_tab <- lapply(list(mod_pi, mod_err, mod_erc, mod_nr, mod_nc), MuMIn::AICc) |>
+#   unlist() |>
+#   as.data.frame() |>
+#   dplyr::mutate(response = c("P(Invasion)", "Exotic Relative Richness", 
+#                              "Graminoid Cover", 'Native Richness',
+#                              'Native Cover'))|>
+#   dplyr::select('response' = 2,'stand_metrics' = 1) |>
+#   left_join(aic_c)|>
+#   mutate(delta_aic = naive - stand_metrics) |>
+#   mutate_if(is.numeric, round, 2)  |>
+#   dplyr::select(response, delta_aic)
 
 r2c <-  lapply(list(mod_pic, mod_errc, mod_ercc, mod_nrc, mod_ncc, mod_forbc), 
                function(x)performance::r2(x)) |>

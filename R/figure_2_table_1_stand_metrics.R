@@ -141,6 +141,9 @@ diffss <- means |>
   dplyr::rename(phase = phase_adj, plot = PlotCode) |>
   bind_rows(diffs_sd)
 
+
+
+
 # contrasts ====================================================================
 smstats <- list()
 cc <- 1
@@ -173,6 +176,9 @@ diff0ss <- bind_rows(result) |>
   tidyr::replace_na(list(sig0 = "No Change")) |>
   dplyr::select(phase, name, PlotTreatmentStatus, sig0)
 
+numbers_for_results_section_1 <- diffss |>
+  group_by(name, PlotTreatmentStatus) |>
+  summarise(dv = mean(dv, na.omit = T))
 
 
 contrastss <- bind_rows(smstats) |>
