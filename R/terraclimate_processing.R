@@ -11,15 +11,22 @@ lll <- st_read('data/terrain_by_plot.gpkg') |>
 
 z <- list.files('data/big/terraclimate/', full.names = T)
 
+# result <- list()
+# for(i in 1:33){
+#   result[[i]] <- terra::rast(z[i])[[c(3:6)]] |> sum()
+#   names(result[[i]]) <- str_c("cwd", 1990 + i)
+#   print(i)
+# }
+
 result <- list()
 for(i in 1:33){
-  result[[i]] <- terra::rast(z[i])[[c(3:6)]] |> sum()
+  result[[i]] <- terra::rast(z[i]) |> sum()
   names(result[[i]]) <- str_c("cwd", 1990 + i)
   print(i)
 }
 
 brk <- terra::rast(result)
-monthly_brk <- terra::rast(z)
+# monthly_brk <- terra::rast(z)
 
 norms <- lll |>
   dplyr::select(PlotCode) |>
@@ -52,19 +59,19 @@ annual_z_scores <- lll |>
 # control vs treatment in plot
 # precip bar plots
 # facet by site
-ggplot(z_scores, aes(x=year, y=cwd_z, group = PlotCode)) +
+ggplot(annual_z_scores, aes(x=year, y=cwd_z, group = PlotCode)) +
   geom_line(alpha = 0.5) +
   geom_vline(xintercept = c(2011, 2013, 2017, 2023, 2022), lty=2) +
   geom_vline(xintercept = c(2012), linewidth = 2, color = 'red') +
   ggtitle('Annual CWD Z-Scores')
 
-ggplot(z_scores, aes(x=year, y=cwd, group = PlotCode)) +
+ggplot(annual_z_scores, aes(x=year, y=cwd, group = PlotCode)) +
   geom_line(alpha =0.5) +
   geom_vline(xintercept = c(2011, 2013, 2017, 2023, 2022), lty=2) +
   geom_vline(xintercept = c(2012), linewidth = 2, color = 'red') +
   ggtitle('Annual CWD (Cumulative)')
 
-ggplot(z_scores |> filter(year>2009), 
+ggplot(annual_z_scores |> filter(year>2009), 
        aes(x=as.factor(year), y=cwd)) +
   geom_labelvline(data = yrs, aes(xintercept = as.factor(year)), 
                   lty=2, label = 'sample') +
@@ -73,13 +80,49 @@ ggplot(z_scores |> filter(year>2009),
   ggtitle('Annual CWD (Cumulative)')
 
 # bar plots
-ggplot(z_scores |> filter(year>2009) |> mutate(site = str_sub(PlotCode,1,1)), 
-       aes(x=as.factor(year), y=cwd_z, fill = site)) +
+dodge <- position_dodge(width=.75)
+# control vs treatment,
+ggplot(annual_z_scores |> 
+         filter(year>2009, PlotCode %in% plot_visits_10y$PlotCode) |> 
+         mutate(site = str_sub(PlotCode,1,1)) |> 
+         mutate(site = ifelse(site == "E", "Estes", "Phantom")) |>
+         group_by(year, site) |> summarise(mean_cwd = mean(cwd_z), sd_cwd = sd(cwd_z)) |>
+         ungroup(), 
+       aes(x=(year), y=mean_cwd, fill = site)) +
+  geom_bar(stat = 'identity', position = dodge, color = 'black', width = .75) +
   geom_hline(yintercept = 0) +
-  geom_vline(xintercept = as.factor(c(2011, 2013, 2017, 2023, 2022)), lty=2) +
-  geom_vline(xintercept = as.factor(2012), linewidth = 2, color = 'red') +
-  geom_boxplot() +
-  ggtitle('Annual CWD Z-Scores')
+  geom_errorbar(aes(x=year, ymin=mean_cwd-(sd_cwd)*2, ymax = mean_cwd + (sd_cwd)*2, group = site), 
+                position = dodge, width = .25) +
+  geom_vline(xintercept = (c(2011, 2013, 2017, 2023, 2022)), lty=2) +
+  geom_vline(xintercept = (2012), linewidth = 1.5, color = 'firebrick', lty=2) +
+  ggtitle('D) Annual CWD Z-Scores') +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        legend.position = c(0,1),
+        legend.title = element_blank(),
+        legend.justification  = c(0,1),
+        legend.background = element_rect(fill = NA))
+ggsave('out/climate_bar_plot.png', width =7, height =2.5, bg = 'white')
+
+# # control vs treatment,
+# ggplot(annual_z_scores |> 
+#          filter(year>2009, PlotCode %in% plot_visits_10y$PlotCode) |> 
+#          left_join(plot_visits_10y |> dplyr::select(PlotCode, PlotTreatmentStatus)) |>
+#          group_by(year, PlotTreatmentStatus) |> 
+#          mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Treatment", PlotTreatmentStatus)) |>
+#          summarise(mean_cwd = mean(cwd_z), sd_cwd = sd(cwd_z)) |>
+#          ungroup(), 
+#        aes(x=(year), y=mean_cwd, fill = PlotTreatmentStatus)) +
+#   geom_bar(stat = 'identity', position = dodge, color = 'black') +
+#   geom_hline(yintercept = 0) +
+#   # geom_errorbar(aes(x=year, ymin=mean_cwd-(sd_cwd)*2, ymax = mean_cwd + (sd_cwd)*2,
+#   #                   group = PlotTreatmentStatus), 
+#                 # position = dodge, width = .25) +
+#   geom_vline(xintercept = (c(2011, 2013, 2017, 2023, 2022)), lty=2) +
+#   geom_vline(xintercept = (2012), linewidth = 1.5, color = 'red', lty=2) +
+#   ggtitle('Annual CWD Z-Scores') +
+#   theme_bw() +
+#   theme(axis.title = element_blank())
 
 # for glmms ====
 z_scores <- lll |>
