@@ -1,5 +1,5 @@
 # get terraclimate
- source('R/a_tc_data_prep.R')
+source('R/a_tc_data_prep.R')
 library(terra)
 library(ncdf4)
 library(sf)
