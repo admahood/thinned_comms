@@ -55,9 +55,16 @@ rp <- cover_plot |>
          nr = tr*native_rr/100 |> round())
 
 print(rp, n=91)
+
+sw <- comm |> 
+  vegan::diversity() |>
+  tibble::as_tibble(rownames = 'plot')|>
+  dplyr::rename(shannon = value) |>
+  tidyr::separate(plot, into = c('plot', 'phase'), sep = "\\.")
+
 rp |>
   group_by(phase) |>
-  summarise(n=length(unique(plot)))
+  summarise(n=length(unique(plot))) 
 
 inv <- rp |>
   mutate(invaded = ifelse(exotic_rr == 0, 0,1),
@@ -132,15 +139,19 @@ pct_inv <- inv |>
 
 pre_treatment <- cp |>
   left_join(rp)  |>
+  left_join(sw) |>
   filter(phase == '01_Pre') |>
-  dplyr::rename(ptc = tc, prec = rec, ptr =tr, perr = exotic_rr, pnr = nr, pnc = nc) |>
+  dplyr::rename(ptc = tc, prec = rec, ptr =tr, pshannon = shannon,
+                perr = exotic_rr, pnr = nr, pnc = nc) |>
   dplyr::select(-native_rr, -phase)
 
 diffs <- cp |>
   left_join(rp) |>
+  left_join(sw) |>
   left_join(pre_treatment) |>
   mutate(dtc = tc - ptc,
          dnc = nc - pnc,
+         dshannon = shannon - pshannon,
          dnr = nr - pnr,
          drec = rec - prec,
          dtr = tr - ptr,
@@ -149,29 +160,35 @@ diffs <- cp |>
   mutate(site = ifelse(str_sub(plot,1,1)=="E", "Estes Valley", "Phantom"))
 
 # contrasts ====================================================================
-lmerTest::lmer(dtc ~ phase*PlotTreatmentStatus + site +(1|site:plot), data = diffs) -> fit
+lmerTest::lmer(dtc ~ phase*PlotTreatmentStatus + site + (1|site:plot), data = diffs) -> fit
 em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-m1 <- pairs(em) |> broom::tidy() |> mutate(response = "Total Cover")
+m1 <- pairs(em) |> broom::tidy() |> mutate(response = "Total Cover (%)")
  
 lmerTest::lmer(dtr ~ phase*PlotTreatmentStatus + site +(1|site:plot), data = diffs) -> fit
 em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-m2 <- pairs(em) |> broom::tidy() |> mutate(response = "Total Richness")
+m2 <- pairs(em) |> broom::tidy() |> mutate(response = "Total Richness (# spp)")
 
 lmerTest::lmer(derr ~ phase*PlotTreatmentStatus + site +(1|site:plot), data = diffs) -> fit
 em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-m3 <- pairs(em) |> broom::tidy() |> mutate(response = "Invasion Rate")
+m3 <- pairs(em) |> broom::tidy() |> mutate(response = "Invasion Rate (% Non-Native spp)")
 
 lmerTest::lmer(drec ~ phase*PlotTreatmentStatus + site +(1|site:plot), data = diffs) -> fit
 em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-m4 <- pairs(em) |> broom::tidy() |> mutate(response = "Invasion Impact")
+m4 <- pairs(em) |> broom::tidy() |> mutate(response = "Invasion Impact (% Non-Native Cover)")
 
 lmerTest::lmer(dnc ~ phase*PlotTreatmentStatus + site +(1|site:plot), data = diffs) -> fit
 em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-m5 <- pairs(em) |> broom::tidy() |> mutate(response = "Native Cover")
+m5 <- pairs(em) |> broom::tidy() |> mutate(response = "Native Cover (%)")
 
 lmerTest::lmer(dnr ~ phase*PlotTreatmentStatus + site +(1|site:plot), data = diffs) -> fit
 em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-m6 <- pairs(em) |> broom::tidy() |> mutate(response = "Native Richness")
+m6 <- pairs(em) |> broom::tidy() |> mutate(response = "Native Richness (# spp)")
+
+lmerTest::lmer(dshannon ~ phase*PlotTreatmentStatus + site +(1|site:plot), data = diffs) -> fit
+em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
+m7 <- pairs(em) |> broom::tidy() |> mutate(response = "Shannon-Wiener")
+
+
 # different than zero =============
 responses <- dplyr::select(diffs, starts_with('d')) |> names()
 is <- diffs |> dplyr::select(phase, PlotTreatmentStatus) |> unique()
@@ -195,10 +212,16 @@ diff0s <- bind_rows(result) |>
   dplyr::select(phase, response, PlotTreatmentStatus, sig0)
 
 # plotting =====================
-contrasts <- bind_rows(m1, m2, m3, m4, m5, m6) |>
-  dplyr::select(phase, response, p.value) |>
+contrasts <- bind_rows(m1, m2, m3, m4, m5, m6, m7) |>
+  dplyr::select(phase, response, p.value, estimate) |>
   mutate(sig = ifelse(p.value < 0.05, "*", ""),
-         position = c(30,30,30,15,15,15,11,11,11,.2,.2,.2,25,25,25,11,11,11)) 
+         position = c(33,33,33,
+                      13,13,13,
+                      11,11,11,
+                      0,0,0,
+                      0,30,20,
+                      10,10,10,
+                      1,1,1)) 
 
 # diffs |>
 #   dplyr::select(plot, phase, PlotTreatmentStatus, starts_with("d")) |>
@@ -340,15 +363,16 @@ contrasts_pfg <- bind_rows(fgstats) |>
 
 d1 <- diffs |>
   dplyr::select(plot, phase, PlotTreatmentStatus, starts_with("d")) |>
-  tidyr::pivot_longer(cols = c(dtc, drec, derr, dtr, dnr, dnc), 
+  tidyr::pivot_longer(cols = c(dtc, drec, derr, dtr, dnr, dnc, dshannon), 
                       names_to = 'response') |>
   left_join(diff0s) |>
-  mutate(response = case_when(response == "dtc" ~ "Total Cover",
-                              response == "drec" ~ "Invasion Impact",
-                              response == "derr" ~ "Invasion Rate",
-                              response == "dtr" ~ "Total Richness",
-                              response == 'dnc' ~ "Native Cover",
-                              response == 'dnr' ~ "Native Richness")
+  mutate(response = case_when(response == "dtc" ~ "Total Cover (%)",
+                              response == "drec" ~ "Invasion Impact (% Non-Native Cover)",
+                              response == "derr" ~ "Invasion Rate (% Non-Native spp)",
+                              response == "dtr" ~ "Total Richness (# spp)",
+                              response == 'dnc' ~ "Native Cover (%)",
+                              response == 'dshannon' ~ "Shannon-Wiener",
+                              response == 'dnr' ~ "Native Richness (# spp)")
   )|>
   left_join(contrasts) 
 
@@ -357,7 +381,7 @@ d2 <- diffs_pfg |>
   left_join(contrasts_pfg) |>
   left_join(diff0s_pfg) |>
   filter(name != "Tree") |>
-  mutate(name = paste(name, "Cover")) |>
+  mutate(name = paste(name, "Cover (%)")) |>
   dplyr::select(plot, phase, PlotTreatmentStatus, response = name, value = dc, sig, sig0, position)
 
 bind_rows(d1,d2) |>
@@ -367,7 +391,7 @@ bind_rows(d1,d2) |>
   ggplot() +
   geom_boxplot(aes(x=phase, fill = PlotTreatmentStatus, y = value, color = sig0),
                outliers = F) +
-  facet_wrap(~response, scales = 'free_y') +
+  facet_wrap(~response, scales = 'free_y', nrow =4, ncol =3) +
   geom_text(aes(label = sig, x= phase, y=position), size=12) +
   # scale_fill_brewer(palette = 'Set1') +
   scale_fill_manual(values = c('#FF00C5', '#00A884')) +
@@ -377,144 +401,58 @@ bind_rows(d1,d2) |>
   xlab("Years Since Treatment") +
   theme_bw() +
   theme(legend.title = element_blank(),
-        legend.position = "bottom", #c(0,1),
-        # legend.justification = c(0,1),
+        legend.position = c(.95,.05),
+        legend.justification = c(1,0),
+        legend.box = 'horizontal',
         legend.background = element_rect(fill=NA, color = 'black'))
-ggsave('out/figure_3_cover_changes.png', width =8, height = 7, bg='white')
-
-# end figures in paper main text ===============================================
-# fwd etc ======================================================================
-ground_cover <- cover_plot %>%
-  filter(CodeType %in% non_plant_codes,
-         !SpeciesCode %in% c('moss/lichen', 'rock', 'herb veg basal', 'litter',
-                             'coarse fuel in air', 'soil/gravel', 'woody basal')) |>
-  dplyr::select(-CodeType) |>
-  dplyr::mutate(SpeciesCode = ifelse(SpeciesCode == 'litter', 'litter/duff', SpeciesCode)) |>
-  tidyr::separate(new_visit_code, into = c('plot', 'phase'), sep = '\\.')
-
-ggplot(ground_cover, aes(x=phase, y=cover, fill = PlotTreatmentStatus)) +
-  geom_boxplot(outliers = F) +
-  facet_wrap(~SpeciesCode, scales = 'free_y')
-
-ptgc <- ground_cover |>
-  filter(phase == '01_Pre') |>
-  dplyr::rename(ptc = cover) |>
-  dplyr::select(-phase)
-
-diffs_gc <- ground_cover |>
-  left_join(ptgc) |>
-  filter(phase != '01_Pre') |>
-  mutate(dc = cover - ptc,
-         site = str_sub(plot, 1,1)) |>
-  dplyr::rename(name = SpeciesCode)
-
-# contrasts ====================================================================
-gcstats <- list()
-cc <- 1
-for(i in unique(diffs_gc$name)) {
-  lmerTest::lmer(dc ~ phase*PlotTreatmentStatus + (1|site/plot), 
-                 data = diffs_gc |> filter(name == i)) -> fit
-  em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-  gcstats[[cc]] <- pairs(em) |> broom::tidy() |> mutate(response = i)
-  cc<- cc + 1
-}
-
-# t.tests, difference from pre treatment
-result <- list()
-cc <- 1
-for(ph in unique(diffs_gc$phase)){
-  for(ct in unique(diffs_gc$PlotTreatmentStatus)){
-    for(rsp in unique(diffs_gc$name)){
-      result[[cc]] <- diffs_gc |>
-        filter(PlotTreatmentStatus == ct, phase == ph, name == rsp) |>
-        pull(dc) |>
-        wilcox.test() |>
-        broom::tidy() |>
-        mutate(phase = ph, PlotTreatmentStatus = ct, name = rsp)
-      cc <- cc + 1
-    }
-  }
-}
-diff0s_gc <- bind_rows(result) |>
-  mutate(sig0 = ifelse(p.value < 0.05, "Significant\nChange From\nPre-Treatment", 'ns')) |>
-  dplyr::select(phase, name, PlotTreatmentStatus, sig0)
-
-
-
-contrasts_gc <- bind_rows(gcstats) |>
-  mutate(sig = ifelse(p.value < 0.05, "*", "")) |>
-  dplyr::select(phase, name = response, sig) |>
-  mutate(position = c(15,12,12,4,4,15,7,7,7))
-
-diffs_gc |>
-  left_join(contrasts_gc) |>
-  left_join(diff0s_gc) |>
-  dplyr::mutate(phase = case_when(phase == "post0-1" ~ "01",
-                                  phase == "post04-5" ~ '04',
-                                  phase == "post10-11" ~ "10")) |>
-  ggplot() +
-  geom_boxplot(aes(x=phase, fill = PlotTreatmentStatus, y = dc, color = sig0
-                   ), outliers = F) +
-  facet_wrap(~name, scales = 'free_y') +
-  geom_text(aes(label = sig, x= phase, y=position), size=12) +
-  scale_fill_brewer(palette = 'Set1') +
-  scale_color_manual(values = c("grey", 'grey20')) +
-  geom_hline(yintercept = 0, lty =2) +
-  ylab("Change From Pre-Treatment") +
-  xlab("Years Since Treatment") +
-  theme_bw() +
-  theme(legend.title = element_blank())
-ggsave('out/figure_x_gc_treatment_diffs.png', width = 9, height = 4, bg = 'white')
-
+ggsave('out/figure_4_cover_changes.png', width =8, height = 9, bg='white')
 # 
-# # seedlings ====================================================================
+# # end figures in paper main text ===============================================
+# # fwd etc ======================================================================
+# ground_cover <- cover_plot %>%
+#   filter(CodeType %in% non_plant_codes,
+#          !SpeciesCode %in% c('moss/lichen', 'rock', 'herb veg basal', 'litter',
+#                              'coarse fuel in air', 'soil/gravel', 'woody basal')) |>
+#   dplyr::select(-CodeType) |>
+#   dplyr::mutate(SpeciesCode = ifelse(SpeciesCode == 'litter', 'litter/duff', SpeciesCode)) |>
+#   tidyr::separate(new_visit_code, into = c('plot', 'phase'), sep = '\\.')
 # 
-# seeds <- sp_seedling |>
-#   mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Control", PlotTreatmentStatus)) |>
-#   dplyr::select(PlotTreatmentStatus, PlotCode, PlotSize_ac, TotalCount, phase_adj) |>
-#   mutate(spa = TotalCount/PlotSize_ac) |>
-#   group_by(PlotTreatmentStatus, plot = PlotCode, phase = phase_adj) |>
-#   summarise(spa = sum(spa)) |>
-#   ungroup()
+# ggplot(ground_cover, aes(x=phase, y=cover, fill = PlotTreatmentStatus)) +
+#   geom_boxplot(outliers = F) +
+#   facet_wrap(~SpeciesCode, scales = 'free_y')
 # 
-# seeds |>
-#   ggplot() +
-#   geom_boxplot(aes(x=phase, y=spa, fill = PlotTreatmentStatus)) +
-#   scale_y_sqrt()
-# 
-# ptsd <- seeds |>
+# ptgc <- ground_cover |>
 #   filter(phase == '01_Pre') |>
-#   dplyr::rename(ptd = spa) |>
+#   dplyr::rename(ptc = cover) |>
 #   dplyr::select(-phase)
 # 
-# diffs_sd <- seeds |>
+# diffs_gc <- ground_cover |>
+#   left_join(ptgc) |>
 #   filter(phase != '01_Pre') |>
-#   left_join(ptsd) |>
-#   mutate(dd = spa - ptd,
-#          site = str_sub(plot, 1,1),
-#          name = "seedlings")
+#   mutate(dc = cover - ptc,
+#          site = str_sub(plot, 1,1)) |>
+#   dplyr::rename(name = SpeciesCode)
 # 
-# 
-# # contrasts seedlings===========================================================
-# sdstats <- list()
+# # contrasts ====================================================================
+# gcstats <- list()
 # cc <- 1
-# for(i in unique(diffs_sd$name)) {
-#   lmerTest::lmer(dd ~ phase*PlotTreatmentStatus + (1|site/plot), 
-#                  data = diffs_sd |> filter(name == i)) -> fit
+# for(i in unique(diffs_gc$name)) {
+#   lmerTest::lmer(dc ~ phase*PlotTreatmentStatus + (1|site/plot), 
+#                  data = diffs_gc |> filter(name == i)) -> fit
 #   em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
-#   sdstats[[cc]] <- pairs(em) |> broom::tidy() |> mutate(response = i)
+#   gcstats[[cc]] <- pairs(em) |> broom::tidy() |> mutate(response = i)
 #   cc<- cc + 1
 # }
 # 
 # # t.tests, difference from pre treatment
 # result <- list()
 # cc <- 1
-# for(ph in unique(diffs_sd$phase)){
-#   for(ct in unique(diffs_sd$PlotTreatmentStatus)){
-#     for(rsp in unique(diffs_sd$name)){
-#       result[[cc]] <- diffs_sd |>
+# for(ph in unique(diffs_gc$phase)){
+#   for(ct in unique(diffs_gc$PlotTreatmentStatus)){
+#     for(rsp in unique(diffs_gc$name)){
+#       result[[cc]] <- diffs_gc |>
 #         filter(PlotTreatmentStatus == ct, phase == ph, name == rsp) |>
-#         pull(dd) |>
+#         pull(dc) |>
 #         wilcox.test() |>
 #         broom::tidy() |>
 #         mutate(phase = ph, PlotTreatmentStatus = ct, name = rsp)
@@ -522,30 +460,29 @@ ggsave('out/figure_x_gc_treatment_diffs.png', width = 9, height = 4, bg = 'white
 #     }
 #   }
 # }
-# diff0s_sd <- bind_rows(result) |>
+# diff0s_gc <- bind_rows(result) |>
 #   mutate(sig0 = ifelse(p.value < 0.05, "Significant\nChange From\nPre-Treatment", 'ns')) |>
 #   dplyr::select(phase, name, PlotTreatmentStatus, sig0)
 # 
 # 
 # 
-# contrasts_sd <- bind_rows(sdstats) |>
+# contrasts_gc <- bind_rows(gcstats) |>
 #   mutate(sig = ifelse(p.value < 0.05, "*", "")) |>
 #   dplyr::select(phase, name = response, sig) |>
-#   mutate(position = c(9000))
+#   mutate(position = c(15,12,12,4,4,15,7,7,7))
 # 
-# diffs_sd |>
-#   left_join(contrasts_sd) |>
-#   left_join(diff0s_sd) |>
+# diffs_gc |>
+#   left_join(contrasts_gc) |>
+#   left_join(diff0s_gc) |>
 #   dplyr::mutate(phase = case_when(phase == "post0-1" ~ "01",
 #                                   phase == "post04-5" ~ '04',
 #                                   phase == "post10-11" ~ "10")) |>
 #   ggplot() +
-#   geom_boxplot(aes(x=phase, fill = PlotTreatmentStatus, y = dd, color = sig0
-#   ), outliers = F) +
+#   geom_boxplot(aes(x=phase, fill = PlotTreatmentStatus, y = dc, color = sig0
+#                    ), outliers = F) +
 #   facet_wrap(~name, scales = 'free_y') +
 #   geom_text(aes(label = sig, x= phase, y=position), size=12) +
-#   # scale_fill_brewer(palette = 'Set1') +
-#   scale_fill_manual(values = c('#FF00C5', '#00A884')) +
+#   scale_fill_brewer(palette = 'Set1') +
 #   scale_color_manual(values = c("grey", 'grey20')) +
 #   geom_hline(yintercept = 0, lty =2) +
 #   ylab("Change From Pre-Treatment") +
@@ -553,3 +490,91 @@ ggsave('out/figure_x_gc_treatment_diffs.png', width = 9, height = 4, bg = 'white
 #   theme_bw() +
 #   theme(legend.title = element_blank())
 # ggsave('out/figure_x_gc_treatment_diffs.png', width = 9, height = 4, bg = 'white')
+# 
+# # 
+# # # seedlings ====================================================================
+# # 
+# # seeds <- sp_seedling |>
+# #   mutate(PlotTreatmentStatus = ifelse(PlotTreatmentStatus == "NotTreated", "Control", PlotTreatmentStatus)) |>
+# #   dplyr::select(PlotTreatmentStatus, PlotCode, PlotSize_ac, TotalCount, phase_adj) |>
+# #   mutate(spa = TotalCount/PlotSize_ac) |>
+# #   group_by(PlotTreatmentStatus, plot = PlotCode, phase = phase_adj) |>
+# #   summarise(spa = sum(spa)) |>
+# #   ungroup()
+# # 
+# # seeds |>
+# #   ggplot() +
+# #   geom_boxplot(aes(x=phase, y=spa, fill = PlotTreatmentStatus)) +
+# #   scale_y_sqrt()
+# # 
+# # ptsd <- seeds |>
+# #   filter(phase == '01_Pre') |>
+# #   dplyr::rename(ptd = spa) |>
+# #   dplyr::select(-phase)
+# # 
+# # diffs_sd <- seeds |>
+# #   filter(phase != '01_Pre') |>
+# #   left_join(ptsd) |>
+# #   mutate(dd = spa - ptd,
+# #          site = str_sub(plot, 1,1),
+# #          name = "seedlings")
+# # 
+# # 
+# # # contrasts seedlings===========================================================
+# # sdstats <- list()
+# # cc <- 1
+# # for(i in unique(diffs_sd$name)) {
+# #   lmerTest::lmer(dd ~ phase*PlotTreatmentStatus + (1|site/plot), 
+# #                  data = diffs_sd |> filter(name == i)) -> fit
+# #   em <- emmeans(fit, ~ PlotTreatmentStatus | phase)
+# #   sdstats[[cc]] <- pairs(em) |> broom::tidy() |> mutate(response = i)
+# #   cc<- cc + 1
+# # }
+# # 
+# # # t.tests, difference from pre treatment
+# # result <- list()
+# # cc <- 1
+# # for(ph in unique(diffs_sd$phase)){
+# #   for(ct in unique(diffs_sd$PlotTreatmentStatus)){
+# #     for(rsp in unique(diffs_sd$name)){
+# #       result[[cc]] <- diffs_sd |>
+# #         filter(PlotTreatmentStatus == ct, phase == ph, name == rsp) |>
+# #         pull(dd) |>
+# #         wilcox.test() |>
+# #         broom::tidy() |>
+# #         mutate(phase = ph, PlotTreatmentStatus = ct, name = rsp)
+# #       cc <- cc + 1
+# #     }
+# #   }
+# # }
+# # diff0s_sd <- bind_rows(result) |>
+# #   mutate(sig0 = ifelse(p.value < 0.05, "Significant\nChange From\nPre-Treatment", 'ns')) |>
+# #   dplyr::select(phase, name, PlotTreatmentStatus, sig0)
+# # 
+# # 
+# # 
+# # contrasts_sd <- bind_rows(sdstats) |>
+# #   mutate(sig = ifelse(p.value < 0.05, "*", "")) |>
+# #   dplyr::select(phase, name = response, sig) |>
+# #   mutate(position = c(9000))
+# # 
+# # diffs_sd |>
+# #   left_join(contrasts_sd) |>
+# #   left_join(diff0s_sd) |>
+# #   dplyr::mutate(phase = case_when(phase == "post0-1" ~ "01",
+# #                                   phase == "post04-5" ~ '04',
+# #                                   phase == "post10-11" ~ "10")) |>
+# #   ggplot() +
+# #   geom_boxplot(aes(x=phase, fill = PlotTreatmentStatus, y = dd, color = sig0
+# #   ), outliers = F) +
+# #   facet_wrap(~name, scales = 'free_y') +
+# #   geom_text(aes(label = sig, x= phase, y=position), size=12) +
+# #   # scale_fill_brewer(palette = 'Set1') +
+# #   scale_fill_manual(values = c('#FF00C5', '#00A884')) +
+# #   scale_color_manual(values = c("grey", 'grey20')) +
+# #   geom_hline(yintercept = 0, lty =2) +
+# #   ylab("Change From Pre-Treatment") +
+# #   xlab("Years Since Treatment") +
+# #   theme_bw() +
+# #   theme(legend.title = element_blank())
+# # ggsave('out/figure_x_gc_treatment_diffs.png', width = 9, height = 4, bg = 'white')

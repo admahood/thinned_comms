@@ -42,7 +42,9 @@ plot_level_metrics <- read_csv("data/plot_level_data.csv")  |>
   left_join(read_csv('data/terraclim_cwd_z.csv')) |>
   mutate(total_cover = native_cover + exotic_cover) |>
   tidyr::replace_na(list(seedlings_per_ha = 0)) |>
-  left_join(forbs)
+  left_join(forbs) |>
+  left_join(plot_visits_10y) |>
+  filter(plot != "P1-2-T-615-02")
   
 # glimpse(plot_level_metrics);summary(plot_level_metrics)
 
@@ -54,22 +56,39 @@ plot_level_metrics <- read_csv("data/plot_level_data.csv")  |>
 #                                        -PlotCode)) 
 # varImpPlot(rf_err)
 
-mod_err <- glmmTMB(I(err+ + 0.000001) ~ 
+plot_level_metrics$pos <- numFactor(scale(plot_level_metrics$UTME),scale(plot_level_metrics$UTMN))
+
+mod_err <- glmmTMB(I(err + 0.000001) ~ 
                      tpa +
                      def_z_trt +
-                     # ns(def_norm, 2) +
                      cwd_z +
-                     # seedlings_per_ha +
-                     # fwd +
-                     # quadratic_mean_diameter +
-                     # ba_m2perha +
-                     # hli +
                      total_cover +
                      (1|plot), 
-            data = plot_level_metrics,# map = list(theta = factor(NA)), 
-             # start = list(theta = log(10)),
+            data = plot_level_metrics,
             family = beta_family(), REML =T, na.action = na.fail
               )
+# library(spaMM)
+# mod_errs <- fitme(I(err + 0.000001) ~ 
+#                      tpa +
+#                      def_z_trt +
+#                      cwd_z +
+#                      total_cover +
+#                      (1|plot) +
+#                      Matern(1|UTME + UTMN) , 
+#                   family=beta_resp(),
+#                    data = plot_level_metrics)
+# plot(DHARMa::simulateResiduals(mod_errs))
+# plot(DHARMa::simulateResiduals(mod_err))
+# 
+# plot_level_metrics$err_resid <- resid(mod_err)
+# 
+# ggplot(plot_level_metrics, aes(x=UTME, y=UTMN, size=err_resid)) +
+#   geom_point(shape=1) +
+#   facet_wrap(~trt_u_adj, scales = "free")
+# 
+# sims <- DHARMa::simulateResiduals(mod_err)
+# DHARMa::testSpatialAutocorrelation(sims, x= plot_level_metrics$UTME, y=plot_level_metrics$UTMN, plot=F)
+
 # MuMIn::dredge(mod_err)
 # summary(mod_err); performance::r2(mod_err); performance::check_collinearity(mod_err); car::Anova(mod_err)
 
@@ -102,6 +121,8 @@ mod_erc <- glmmTMB(I(graminoid_cover/100) ~
             na.action = na.fail,
             family = beta_family(), 
 )
+
+
 
 mod_forb <- glmmTMB(I(forb_cover/100) ~ 
                      # erc +

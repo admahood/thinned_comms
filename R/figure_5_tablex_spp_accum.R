@@ -139,3 +139,60 @@ pools |>
   pivot_wider(names_from = phase, values_from = boot) |>
   arrange(spp, PlotTreatmentStatus) |>
   write_csv("out/table_3_specpools_final.csv")
+
+# NMDS =========================================================================
+
+nmds <- comm |>
+  vegan::decostand(method = 'total') |>
+  vegan::metaMDS(trymax = 200)
+
+d_nmds <- nmds$points |>
+  as_tibble(rownames = 'meta') |>
+  tidyr::separate(meta, sep = "\\.", into = c('plot', 'phase')) |>
+  mutate(site = ifelse(str_sub(plot, 1,1)=="E", "Estes Valley", "Phantom Creek")) |>
+  left_join(plot_visits_10y |> dplyr::select(PlotTreatmentStatus, PlotCode) |> unique(), 
+            by = c('plot'='PlotCode')) |>
+  mutate(PlotTreatmentStatus = str_replace_all(PlotTreatmentStatus, "NotTreated", "Treatment"))
+
+d_nmds |>
+  ggplot(aes(x=MDS1, y=MDS2, color = phase, shape=phase)) +
+  geom_path(aes(group = plot), color = 'grey', linewidth = 1) +
+  geom_point(size=3) +
+  # stat_ellipse(aes(group = site), level = 0.9) +
+  facet_grid(site~PlotTreatmentStatus) +
+  theme_bw()
+
+pmnva <- vegan::adonis2(comm |>
+                          vegan::decostand(method = 'total') ~ PlotTreatmentStatus+phase + site,
+                        data = d_nmds, permutations = 999, 
+                        by = 'terms')
+
+# change from pre-treatment
+
+pt_nmds <-
+  d_nmds |>
+  filter(phase == '01_Pre') |>
+  dplyr::select(-phase) |>
+  dplyr::rename(pmds1 = MDS1, pmds2 = MDS2)
+
+dd_nmds <-
+  d_nmds |>
+  filter(phase != '01_Pre') |>
+  dplyr::left_join(pt_nmds) |>
+  mutate(dMDS1 = MDS1 - pmds1,
+         dMDS2 = MDS2 - pmds2)
+  
+dd_nmds |>
+  ggplot(aes(x=dMDS1, y=dMDS2, color = phase, shape=phase)) +
+  geom_path(aes(group = plot), color = 'grey', linewidth = 1) +
+  geom_point(size=3) +
+  # stat_ellipse(aes(group = site), level = 0.9) +
+  facet_grid(site~PlotTreatmentStatus) +
+  theme_bw() +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  stat_ellipse() +
+  ggtitle()
+
+
+
