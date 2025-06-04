@@ -1,12 +1,12 @@
 name,term,statistic,p.value
-Khr Fuels (t/ha),Treatment,7.3,0.0098
-Khr Fuels (t/ha),Site,0.15,0.7
-Saplings/ha,Treatment,5.6,0.022
-Saplings/ha,Site,4.6,0.039
-Litter/Duff Fuel Load (t/ha),Treatment,2.8,0.097
-Litter/Duff Fuel Load (t/ha),Site,0.34,0.56
-1/10/100 Hour Fuels (t/ha),Treatment,6.3,0.016
-1/10/100 Hour Fuels (t/ha),Site,11,0.0023
+Coarse Wood Load (t ha<sup>-1</sup>),Treatment,7.3,0.0098
+Coarse Wood Load (t ha<sup>-1</sup>),Site,0.15,0.7
+Saplings ha<sup>-1</sup>,Treatment,5.6,0.022
+Saplings ha<sup>-1</sup>,Site,4.6,0.039
+Litter/Duff Load (t ha<sup>-1</sup>),Treatment,2.8,0.097
+Litter/Duff Load (t ha<sup>-1</sup>),Site,0.34,0.56
+Fine Wood Load (t ha<sup>-1</sup>),Treatment,6.3,0.016
+Fine Wood Load (t ha<sup>-1</sup>),Site,11,0.0023
 Tree Canopy Cover (%),Treatment,12,0.0013
 Tree Canopy Cover (%),Site,3.7,0.063
 Shrub Height (cm),Treatment,0.15,0.7

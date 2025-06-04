@@ -1,5 +1,6 @@
 # stand structure changes
 library(emmeans)
+library(ggtext)
 source("R/a_tc_data_prep.R")
 # Seedlings =====================
 seeds <- seedling_density |>
@@ -182,9 +183,12 @@ numbers_for_results_section_1 <- diffss |>
 
 
 contrastss <- bind_rows(smstats) |>
-  mutate(sig = ifelse(p.value < 0.05, "*", "")) |>
+  mutate(sig = ifelse(p.value < 0.1, ".", ""),
+         sig = ifelse(p.value < 0.05, "*", sig),
+         sig = ifelse(p.value < 0.01, "**", sig),
+         sig = ifelse(p.value < 0.001, "***", sig)) |>
   dplyr::select(phase, name = response, sig) |>
-  mutate(position = c(50,250,150,4,5,9,1,11,5,13,13,13,5,5,5, 5000, 5000, 5000))
+  mutate(position = c(50,290,290,6,9,10,5,13,7,14,13,13,5,5,5, 5000, 5000, 5000))
 
 diffss |>
   left_join(diff0ss) |>
@@ -192,15 +196,15 @@ diffss |>
   dplyr::mutate(phase = case_when(phase == "post0-1" ~ "01",
                                   phase == "post04-5" ~ '05',
                                   phase == "post10-11" ~ "10"),
-                name = case_when(name == "tpa" ~ "Trees/ha",
+                name = case_when(name == "tpa" ~ "Trees ha<sup>-1</sup>",
                                  name == 'cbh_m' ~ "Crown Base Height (m)",
-                                 name == 'fwd' ~ "Fine Woody Debris (%)",
-                                 name == 'ba_m2perha' ~ 'Basal Area (m2/ha)',
-                                 name == 'seedling_density' ~ "Seedlings/ha",
+                                 name == 'fwd' ~ "Fine Wood Cover (%)",
+                                 name == 'ba_m2perha' ~ 'Basal Area (m<sup>2</sup> ha<sup>-1</sup>)',
+                                 name == 'seedling_density' ~ "Seedlings ha<sup>-1</sup>",
                                  name == 'qmd' ~ 'Quadratic Mean Diameter (cm)')) |>
 ggplot(aes(x=phase, y=dv, fill = PlotTreatmentStatus)) +
   geom_boxplot(outliers = F, aes(color = sig0)) +
-  geom_text(aes(label = sig, x= phase, y=position), size=12) +
+  geom_text(aes(label = sig, x= phase, y=position), size=8) +
   facet_wrap(~name, scales = 'free_y') +
   scale_fill_brewer(palette = "Set1") +
   scale_fill_manual(values = c('#FF00C5', '#00A884')) +
@@ -209,12 +213,15 @@ ggplot(aes(x=phase, y=dv, fill = PlotTreatmentStatus)) +
   ylab("Change From Pre-Treatment") +
   xlab("Years Since Treatment") +
   theme_bw() +
-  theme(legend.title = element_blank(),legend.position = 'bottom'
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom',
+        strip.text = element_markdown()
         #legend.position = c(.9, .1),
         #legend.justification = c(1,0)
-        )
+        ) +
+  labs(caption = ". p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001")
 
-ggsave('out/figure_1_stand_metric_changes.png', width = 7, height =5.5, bg = 'white')
+ggsave('out/figure_2_stand_metric_changes.png', width = 7.8, height =6, bg = 'white')
 
 diffss |> group_by(name, PlotTreatmentStatus) |> summarise(meanv = mean(dv))
 

@@ -32,7 +32,7 @@ ph1t <- rowz |> dplyr::filter(phase == "post0-1", PlotTreatmentStatus == "Treatm
 ph5t <- rowz |> dplyr::filter(phase == "post04-5", PlotTreatmentStatus == "Treatment") |> pull(index)
 ph10t <- rowz |> dplyr::filter(phase == "post10-11", PlotTreatmentStatus == "Treatment") |> pull(index)
 
-# exotics 
+# non-natives 
 
 exotics <- colz |> dplyr::filter(NativityL48 == "exotic") |> pull(SpeciesCode)
 natives <- colz |> dplyr::filter(NativityL48 == "native") |> pull(SpeciesCode)
@@ -56,14 +56,14 @@ vegan::specaccum(comm[ph0t,natives], permutations = 999)[c(3:5)] |> as_tibble() 
 vegan::specaccum(comm[ph1t,natives], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "native", ph = "01"),
 vegan::specaccum(comm[ph5t,natives], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "native", ph = "05"),
 vegan::specaccum(comm[ph10t,natives], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "native", ph = "10"),
-vegan::specaccum(comm[ph0c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "exotic", ph = "0"),
-vegan::specaccum(comm[ph1c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "exotic", ph = "01"),
-vegan::specaccum(comm[ph5c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "exotic", ph = "05"),
-vegan::specaccum(comm[ph10c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "exotic", ph = "10"),
-vegan::specaccum(comm[ph0t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "exotic", ph = "0"),
-vegan::specaccum(comm[ph1t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "exotic", ph = "01"),
-vegan::specaccum(comm[ph5t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "exotic", ph = "05"),
-vegan::specaccum(comm[ph10t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "exotic", ph = "10"),
+vegan::specaccum(comm[ph0c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "Non-Native", ph = "0"),
+vegan::specaccum(comm[ph1c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "Non-Native", ph = "01"),
+vegan::specaccum(comm[ph5c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "Non-Native", ph = "05"),
+vegan::specaccum(comm[ph10c,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="control", spp = "Non-Native", ph = "10"),
+vegan::specaccum(comm[ph0t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "Non-Native", ph = "0"),
+vegan::specaccum(comm[ph1t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "Non-Native", ph = "01"),
+vegan::specaccum(comm[ph5t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "Non-Native", ph = "05"),
+vegan::specaccum(comm[ph10t,exotics], permutations = 999)[c(3:5)] |> as_tibble() |> mutate(trt="treated", spp = "Non-Native", ph = "10"),
 ) |>
   dplyr::filter(spp !='total') |>
   dplyr::mutate(ph = ifelse(ph == "0", "Pre", ph)|>
@@ -80,7 +80,7 @@ vegan::specaccum(comm[ph10t,exotics], permutations = 999)[c(3:5)] |> as_tibble()
   ylab("Species Richness") +
   xlab("Number of Plots") +
   theme_bw()
-ggsave("out/figure_4_spp_accumulation.png", width = 7, height=5, bg="white")
+ggsave("out/figure_5_spp_accumulation.png", width = 7, height=5, bg="white")
 
 # species pools ============
 cpool <- bind_rows(

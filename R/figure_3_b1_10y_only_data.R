@@ -1,6 +1,6 @@
 # stuff that doesnt have all 4 years
 source('R/a_tc_data_prep.R')
-
+library(ggtext)
 dl <- list()
 
 dl$kf <- khr_fuels |>
@@ -14,12 +14,7 @@ dl$kf <- khr_fuels |>
   reframe(loading_t_ac = sum(loading_t_ac, na.rm=T)) |>
   dplyr::select(new_visit_code, PlotTreatmentStatus, value = loading_t_ac)  |>
   dplyr::mutate(value = value*2.52)|>
-  dplyr::mutate(name = "Khr Fuels (t/ha)")
-
-# dl$kf |>
-#   ggplot(aes(x=new_visit_code |> str_sub(1,1), y=value, fill=PlotTreatmentStatus)) +
-#   geom_boxplot() +
-#   ylab("Mass (r1 * r2 * pi * length * density)") 
+  dplyr::mutate(name = "Coarse Wood Load (t ha<sup>-1</sup>)")
 
 dl$saps <- cp_sapling |>
   group_by(new_visit_code, phase_adj, PlotTreatmentStatus) |>
@@ -28,23 +23,8 @@ dl$saps <- cp_sapling |>
   filter(phase_adj %in% c('post10-11')) |>
   pivot_longer(cols = c(saplings_per_acre)) |>
   dplyr::select(-phase_adj) |>
-  dplyr::mutate(name = 'Saplings/ha', 
+  dplyr::mutate(name = 'Saplings ha<sup>-1</sup>', 
                 value  = value * 2.47)
-
-# dl$saps |>
-#   ggplot(aes(x=new_visit_code |> str_sub(1,1), y=value, fill = PlotTreatmentStatus)) +
-#   geom_boxplot(outliers = F) +
-#   facet_wrap(~name, scales = "free_y") +
-#   ggtitle("Saplings")
-
-# dl$seeds <- seedling_density |>
-#   dplyr::rename(value = seedlings_per_acre) |>
-#   mutate(name = 'seedlings_per_acre')
-
-# Convert Litter & Duff depth to Loading - CHANGE MULTIPLIER BASED ON FOREST TYPE (BELOW)
-# PIPO- litter=2.37 tons/ac/in (Ziegler 2014 thesis), duff= 7.27 (Battaglia et al 2010)
-# DryMixedCon- litter=6.6 tons/ac/in (Ziegler 2014 thesis), duff=7.27 (Battaglia et al 2010)
-# Lodgepole- litter=4.77 (Brown 1981), duff=10.79 (Battaglia et al 2010)
 
 lut_bd<- c('Litter' = 2.37,
            'Duff' = 7.27)
@@ -60,7 +40,7 @@ dl$gf <- sp_groundfuel |>
   summarise(value = sum(loading)) |>
   ungroup() |>
   dplyr::mutate(value = value*2.52) |>
-  mutate(name = 'Litter/Duff Fuel Load (t/ha)')
+  mutate(name = 'Litter/Duff Load (t ha<sup>-1</sup>)')
 
 dl$wf <- sp_woodyfuel |>
   dplyr::select(new_visit_code, Measurement, load = Calibrated,PlotTreatmentStatus) |>
@@ -69,7 +49,7 @@ dl$wf <- sp_woodyfuel |>
   ungroup() |>
   dplyr::rename(value = load) |>
   dplyr::mutate(value = value*2.52,
-    name = '1/10/100 Hour Fuels (t/ha)')
+    name = 'Fine Wood Load (t ha<sup>-1</sup>)')
 
 dl$tcc <- tree_canopy_cover |>
   dplyr::filter(phase_adj == 'post10-11') |>
@@ -139,6 +119,8 @@ p <- bind_rows(dl) |>
   theme(#legend.position = c(.9,0.1),
         #legend.justification = c(1,0),
         legend.title = element_blank(),
-        axis.title.y = element_blank()) ;p
+        strip.text = element_markdown(),
+        axis.title.y = element_blank()) +
+  labs(caption = ". p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001") ;p
 
 ggsave(p, filename = 'out/ten_year_only_variables.png', width = 7, height = 4.5)

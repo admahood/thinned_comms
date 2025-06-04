@@ -214,7 +214,10 @@ diff0s <- bind_rows(result) |>
 # plotting =====================
 contrasts <- bind_rows(m1, m2, m3, m4, m5, m6, m7) |>
   dplyr::select(phase, response, p.value, estimate) |>
-  mutate(sig = ifelse(p.value < 0.05, "*", ""),
+  mutate(sig = ifelse(p.value < 0.1, ".", ""),
+         sig = ifelse(p.value < 0.05, "*", sig),
+         sig = ifelse(p.value < 0.01, "**", sig),
+         sig = ifelse(p.value < 0.001, "***", sig),
          position = c(33,33,33,
                       13,13,13,
                       11,11,11,
@@ -328,9 +331,12 @@ diff0s_pfg <- bind_rows(result) |>
 
 
 contrasts_pfg <- bind_rows(fgstats) |>
-  mutate(sig = ifelse(p.value < 0.05, "*", "")) |>
+  mutate(sig = ifelse(p.value < 0.1, ".", ""),
+         sig = ifelse(p.value < 0.05, "*", sig),
+         sig = ifelse(p.value < 0.01, "**", sig),
+         sig = ifelse(p.value < 0.001, "***", sig)) |>
   dplyr::select(phase, name = response, sig) |>
-  mutate(position = c(5,5.5,.10,.25,15,10,5,.2,.2))
+  mutate(position = c(5,6,.10,.25,15,10,5,.2,.2))
 
 # diffs_pfg |>
 #   left_join(contrasts_pfg) |>
@@ -392,7 +398,7 @@ bind_rows(d1,d2) |>
   geom_boxplot(aes(x=phase, fill = PlotTreatmentStatus, y = value, color = sig0),
                outliers = F) +
   facet_wrap(~response, scales = 'free_y', nrow =4, ncol =3) +
-  geom_text(aes(label = sig, x= phase, y=position), size=12) +
+  geom_text(aes(label = sig, x= phase, y=position), size=9) +
   # scale_fill_brewer(palette = 'Set1') +
   scale_fill_manual(values = c('#FF00C5', '#00A884')) +
   scale_color_manual(values = c("grey", 'grey20')) +
@@ -404,7 +410,8 @@ bind_rows(d1,d2) |>
         legend.position = c(.95,.05),
         legend.justification = c(1,0),
         legend.box = 'horizontal',
-        legend.background = element_rect(fill=NA, color = 'black'))
+        legend.background = element_rect(fill=NA, color = 'black')) +
+  labs(caption = ". p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001")
 ggsave('out/figure_4_cover_changes.png', width =8, height = 9, bg='white')
 # 
 # # end figures in paper main text ===============================================
