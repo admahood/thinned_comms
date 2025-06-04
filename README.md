@@ -1,3 +1,9 @@
+
+
+[![DOI](https://zenodo.org/badge/719301964.svg)](https://doi.org/10.5281/zenodo.15595392)
+
+
+
 # Data and Code for "Forest restoration treatments increase native plant diversity but open the door to invasion in the Colorado Front Range"
 
 Preprint DOI: https://doi.org/10.32942/X2WP8M
