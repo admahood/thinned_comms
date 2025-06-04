@@ -52,4 +52,4 @@ rsconnect/
 data/big/*
 out/archive/*
 R/archive/*
-ref/*
+ref
