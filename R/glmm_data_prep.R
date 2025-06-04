@@ -127,9 +127,9 @@ plot_level_metrics <- cp_tree |>
          exotic_relative_cover = 100 * (exotic_cover/(native_cover + exotic_cover)),
          exotic_relative_richness = 100 * (nspp_exotic/(nspp_native + nspp_exotic))
          ) 
-
-summary(plot_level_metrics)
-glimpse(plot_level_metrics)
+# 
+# summary(plot_level_metrics)
+# glimpse(plot_level_metrics)
 write_csv(plot_level_metrics, "data/plot_level_data.csv")
 
 

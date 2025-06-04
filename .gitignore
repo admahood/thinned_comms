@@ -50,3 +50,6 @@ rsconnect/
 
 # big data files
 data/big/
+out/archive/
+R/archive/
+ref/

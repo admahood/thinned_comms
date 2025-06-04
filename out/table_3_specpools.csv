@@ -1,9 +1,0 @@
-phase,PlotTreatmentStatus,total,native,exotic
-0pre,Control,165 (7),151 (6),7 (1)
-post_01,Control,154 (9),144 (8),6 (1)
-post_05,Control,153 (6),145 (5),6 (1)
-post_10,Control,177 (8),162 (7),10 (1)
-0pre,Treatment,149 (7),140 (6),5 (1)
-post_01,Treatment,140 (6),130 (6),5 (1)
-post_05,Treatment,181 (9),161 (8),14 (1)
-post_10,Treatment,209 (12),187 (11),15 (1)

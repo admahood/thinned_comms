@@ -1,7 +1,0 @@
-spp,PlotTreatmentStatus,0pre,post_01,post_05,post_10
-exotic,Control,7 (1),6 (1),6 (1),10 (1)
-exotic,Treatment,5 (1),5 (1),14 (1),15 (1)
-native,Control,151 (6),144 (8),145 (5),162 (7)
-native,Treatment,140 (6),130 (6),161 (8),187 (11)
-total,Control,165 (7),154 (9),153 (6),177 (8)
-total,Treatment,149 (7),140 (6),181 (9),209 (12)

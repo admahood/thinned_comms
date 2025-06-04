@@ -77,65 +77,6 @@ pct_inv <- inv |>
   ungroup() |>
   transmute(phase = phase, Treatment = PlotTreatmentStatus, 
             percent_invaded = round(n_invaded/n_plots * 100, 1))
-# 
-# # relative ex richness
-# lmerTest::lmer(exotic_rr ~ phase*PlotTreatmentStatus + site + (1|plot), data = rp) -> fit1
-# emerr <- emmeans(fit1, ~ PlotTreatmentStatus | phase) |> 
-#   broom.mixed::tidy() |> 
-#   mutate(response = "Exotic Relative Richness")
-# # total richness
-# lme4::lmer(tr ~ phase*PlotTreatmentStatus + site + (1|plot), data = rp) -> fit2
-# emtr <- emmeans(fit2, ~ PlotTreatmentStatus | phase) |> 
-#   broom.mixed::tidy() |> 
-#   mutate(response = "Total Richness")
-# # relative ex cover
-# lmerTest::lmer(rec ~ phase*PlotTreatmentStatus + site + (1|plot), data = cp) -> fit3
-# emerc <- emmeans(fit3, ~ PlotTreatmentStatus | phase) |> 
-#   broom.mixed::tidy() |> 
-#   mutate(response = "Exotic Relative Cover")
-# # relative total cover
-# lmerTest::lmer(tc ~ phase*PlotTreatmentStatus + site + (1|plot), data = cp) -> fit4
-# emtc <- emmeans(fit4, ~ PlotTreatmentStatus | phase) |> 
-#   broom.mixed::tidy() |>
-#   mutate(response = "Total Cover")
-# 
-# lme4::glmer(invaded ~ phase*PlotTreatmentStatus + site + (1|plot), data = inv, family = 'binomial') -> fit5
-# emin <- emmeans(fit5, ~ PlotTreatmentStatus | phase, predict.type = 'response') |> 
-#   broom.mixed::tidy() |>
-#   dplyr::rename(estimate = prob) |>
-#   mutate(response = "p(Invasion)")
-# 
-# emmeans(fit5, ~ phase|PlotTreatmentStatus, predict.type = 'response') |>
-#   pairs() |>
-#   broom::tidy() |>
-#   dplyr::select(Treatment = PlotTreatmentStatus, contrast, odds.ratio, std.error, statistic, adj.p.value) |>
-#   mutate_if(is.numeric, signif, 2) |>
-#   write.csv('out/trt_contrast_pinvasion.csv')
-# emmeans(fit5, ~ phase, predict.type = 'response') |> pairs()
-# emmeans(fit5, ~ PlotTreatmentStatus, predict.type = 'response') |> pairs()
-# 
-# lapply(list(fit1, fit2, fit3, fit4, fit5), performance::r2)
-# 
-# 
-# bind_rows(list(emerr, emerc, emtc, emtr, emin)) |>
-#   dplyr::mutate(emm = paste0(round(estimate,2), " (", round(std.error, 2), ")")) |>
-#   dplyr::select(response, phase, Treatment = PlotTreatmentStatus, emm) |>
-#   pivot_wider(values_from = emm, names_from = response) |>
-#   # left_join(inv) |>
-#   write_csv('out/table_1_emms.csv')
-# 
-# table1 <- cp |>
-#   left_join(rp) |>
-#   dplyr::select(-plot) |>
-#   group_by(phase, PlotTreatmentStatus) |>
-#   summarise_all(mean) |>
-#   ungroup() |>
-#   mutate_if(is.numeric, signif, 3) |>
-#   dplyr::rename(treatment = PlotTreatmentStatus, 'Total Cover' = tc, 
-#                 "Relative Exotic Cover" = rec,
-#                 'Total Richness' = tr,
-#                 'Relative Exotic Richness' = exotic_rr) |>
-#   write_csv("out/table_1_summary.csv")
 
 pre_treatment <- cp |>
   left_join(rp)  |>
@@ -219,8 +160,8 @@ contrasts <- bind_rows(m1, m2, m3, m4, m5, m6, m7) |>
          sig = ifelse(p.value < 0.01, "**", sig),
          sig = ifelse(p.value < 0.001, "***", sig),
          position = c(33,33,33,
-                      13,13,13,
-                      11,11,11,
+                      13,16,16,
+                      11,14.5,11,
                       0,0,0,
                       0,30,20,
                       10,10,10,
@@ -336,7 +277,7 @@ contrasts_pfg <- bind_rows(fgstats) |>
          sig = ifelse(p.value < 0.01, "**", sig),
          sig = ifelse(p.value < 0.001, "***", sig)) |>
   dplyr::select(phase, name = response, sig) |>
-  mutate(position = c(5,6,.10,.25,15,10,5,.2,.2))
+  mutate(position = c(5, 6, .10,.25, 18,10,5,.2,.2))
 
 # diffs_pfg |>
 #   left_join(contrasts_pfg) |>
@@ -398,7 +339,7 @@ bind_rows(d1,d2) |>
   geom_boxplot(aes(x=phase, fill = PlotTreatmentStatus, y = value, color = sig0),
                outliers = F) +
   facet_wrap(~response, scales = 'free_y', nrow =4, ncol =3) +
-  geom_text(aes(label = sig, x= phase, y=position), size=9) +
+  geom_text(aes(label = sig, x= phase, y=position), size=8) +
   # scale_fill_brewer(palette = 'Set1') +
   scale_fill_manual(values = c('#FF00C5', '#00A884')) +
   scale_color_manual(values = c("grey", 'grey20')) +
