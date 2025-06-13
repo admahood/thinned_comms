@@ -9,7 +9,9 @@
 AL Mahood, CS Stevens-Rumann, AE Rhea, SM Ritter, K Barrett, PJ Fornwalt
 
 Forest Ecology and Management 593, 122881
+
 DOI: https://doi.org/10.1016/j.foreco.2025.122881
+
 Preprint DOI: https://doi.org/10.32942/X2WP8M
 
 ## Abstract
