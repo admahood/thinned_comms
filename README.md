@@ -6,7 +6,7 @@
 
 # Data and Code for "Forest restoration treatments increase native plant diversity but open the door to invasion in the Colorado Front Range"
 
-AL Mahood, CS Stevens-Rumann, AE Rhea, SM Ritter, K Barrett, PJ Fornwalt
+AL Mahood, CS Stevens-Rumann, DM Barnard, AE Rhea, SM Ritter, K Barrett, PJ Fornwalt
 
 Forest Ecology and Management 593, 122881
 
